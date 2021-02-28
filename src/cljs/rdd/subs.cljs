@@ -43,11 +43,12 @@
           children (mapv (fn [edge-id] @(subscribe [:edge->child edge-id])) (:child-edges node))]
       (if (not (empty? children))
 
-      ;; Has children
-        {:name (:name node)
-         :children children}
+        ;; Has children
+        (-> node
+            (dissoc :child-edges)
+            (merge {:children children}))
 
-      ;; Terrminate hit bottom
+        ;; Terminate hit bottom
         node)))))
 
 ;; Given an edge, we materialize a child node
@@ -55,9 +56,35 @@
  :edge->child
  (fn [_ [_ edge-id]]
    (reaction
-    (let [edge @(subscribe [:edge edge-id])]
-      {:qty (:qty edge)
-       :node @(subscribe [:node->tree (:child-node edge)])}))))
+    (let [edge @(subscribe [:edge edge-id])
+          node @(subscribe [:node->tree (:child-node edge)])
+          qty (:qty edge)
+          order (:order edge)]
+
+      (-> node
+          (dissoc :child-edges)
+          (merge {:qty qty :order order}))))))
+
+(comment
+  (dissoc {:a 10 :b 20} :a)
+  (->> 10
+       (- 20))
+
+  (-> 10
+      (- 20))
+
+  (->> {:a 10}
+       (merge {:a 20}))
+
+  (merge {:a 10} {:a 20})
+
+  (-> {:a 10}
+      (merge {:a 20}))
+
+  (- 20 10)
+  (- 10 20))
+
+
 
 (reg-sub
  :active-node-id

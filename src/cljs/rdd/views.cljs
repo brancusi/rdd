@@ -8,6 +8,7 @@
   ;;  Components
    [rdd.components.viewers.ednviewer :refer [edn->hiccup]]
    [rdd.components.bom-row.view :refer [bom-row]]
+   [rdd.components.node-editor.views.authenticated :refer [node-editor]]
 
    [re-com.core :as re-com :refer [at]]
    [herb.core :refer [<class]]
@@ -30,18 +31,18 @@
   (rf/dispatch [:update-node node-id props]))
 
 
-(defn node-viewer
+(defn main
   []
-  (let [node-id (subscribe [:active-node-id])
-        node (subscribe [:active-node])]
+  (let [node-id @(subscribe [:active-node-id])
+        node @(subscribe [:active-node])
+        tree @(subscribe [:node->tree node-id])]
     [:<>
     ;;  [nav]
-     (info "Hey")
-     [:p (str (:name @node) "!!!!")]
-     [bom-row @node-id @node (partial update-node @node-id)]
-     [edn->hiccup @(subscribe [:all])]
+     [node-editor tree]
+     [bom-row node-id node (partial update-node node-id)]
+    ;;  [edn->hiccup @(subscribe [:all])]
 
-     [edn->hiccup @(subscribe [:node->tree @(subscribe [:active-node-id])])]]))
+     [edn->hiccup tree]]))
     ;;  [edn->hiccup @(subscribe [:all])]]))
     ;; [edn->hiccup @(subscribe [:node->tree @(subscribe [:active-node-id])])]
 
@@ -49,4 +50,4 @@
   [re-com/v-box
    :src      (at)
    :height   "100%"
-   :children [[title] [node-viewer]]])
+   :children [[main]]])
