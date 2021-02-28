@@ -38,6 +38,7 @@
 
                 :builds {:app {:target :browser
                                :output-dir "resources/public/js/compiled"
+                               :closure-defines {re-com.config/root-url-for-compiler-output "http://localhost:8280/js/compiled/cljs-runtime/"}
                                :asset-path "/js/compiled"
                                :modules {:app {:init-fn rdd.core/init
                                                :preloads [devtools.preload]}}

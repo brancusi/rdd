@@ -5,7 +5,7 @@
    [reagent.core  :as reagent]
    [re-frame.core :as rf :refer [subscribe]]
    [herb.core :refer [<class]]
-   [re-com.core   :refer [input-text button]]))
+   [re-com.core   :refer [input-text button at]]))
 
 (defn style []
   {:color "red"
@@ -40,13 +40,15 @@
   (rf/dispatch [:set-active-node "burrito"])
   (rf/dispatch [:update-edge "sauce-1-salt" {:qty 20}])
 
-
-
   ;; 
   )
 
 (defn node-editor
   [nt]
   [:div
+   [input-text
+    :model (:name nt)
+    :on-change (fn [x] (info x))
+    :src (at)]
    [node-row nt]])
 
