@@ -69,6 +69,7 @@
 
    :conversions {"salt" {:cup    {:gram 10}
                          :case   {:pack 25}
+                         :pinch  {:gram 0.2}
                          :pack   {:pound 1}}}
 
    :costs {"salt"    [{:cost 10
@@ -88,42 +89,6 @@
                        :uom :case
                        :date 10000000000
                        :additional-cost 10}]}})
-
-(def hey {:cup    {:gram 10}
-          :case   {:pack 25}
-          :pack   {:pound 1}})
-
-
-(defn conversion-index
-  [conversion]
-  (reduce
-   (fn
-     [[acc] [from-uom val]]
-     (for [[to-uom qty] (seq val)]
-       (assoc-in acc [to-uom from-uom] (/ 1 qty))))
-   (list conversion)
-   (map (fn
-          [[key val]]
-          [key val]) conversion)))
-
-(comment
-  (conversion-index (get-in default-db [:conversions "salt"]))
-
-  ;; 
-  )
-
-
-(info "Acc" {:a 10})
-
-  ;; 
-
-
-(assoc-in {} [:salt :pack] 10)
-
-(seq {:a 10})
-
-(for [yo (keys {:a 10 :b 20})]
-  (info yo))
 
 (defn seed-db
   []

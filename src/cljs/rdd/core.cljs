@@ -11,6 +11,7 @@
 
    ;;  Utils
    [rdd.config :as config]
+   [rdd.utils.conversions]
 
    ;;  Views
    [rdd.views :as views]

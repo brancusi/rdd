@@ -9,6 +9,7 @@
    [re-frame.core :as rf]))
 
 (comment
+
   (rf/dispatch [:reset])
   (rf/dispatch [:reset-db-with {}])
   (js/console.log "Hello")

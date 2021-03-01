@@ -9,6 +9,7 @@
                  [com.taoensso/timbre "5.1.2"]
                  [metosin/reitit "0.5.12"]
                  [reagent "1.0.0"]
+                 [aysylu/loom "1.0.2"]
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
                  [devcards "0.2.7"]
