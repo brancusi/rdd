@@ -101,6 +101,9 @@
      standard-uoms))
 
   (def son (generate-reverse-lookups merged-conversions))
+
+  son
+
   (def supson (graph son))
 
   (uom->uom-factor (get-in default-db [:conversions "salt"]) 25 :case :pinch)
@@ -118,13 +121,10 @@
 
 
   (into [] (bf-path supson :case :pinch))
-  ;; => [:case :pack :pound :gram :pinch]
-
 
   (* 20 0.002204624 1)
 
   (* 1 25 1 453 5)
-
 
   ;; 
   )

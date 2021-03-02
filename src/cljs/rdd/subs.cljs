@@ -10,11 +10,6 @@
    [reagent.ratom :as ra :refer [reaction]]))
 
 (reg-sub
- ::name
- (fn [_]
-   "Hi there"))
-
-(reg-sub
  :all
  (fn
    [db _]
@@ -87,7 +82,95 @@
    [[conversion] [_ _ from-uom to-uom]]
    (uom->uom-factor conversion 1 from-uom to-uom)))
 
+(reg-sub
+ :child-node
+ (fn
+   [db [_ edge]]
+   (get-in db [:nodes (:child-node edge)])))
+
+(reg-sub
+ :active-node-id
+ (fn
+   [db _]
+   (:active-node db)))
+
+(reg-sub
+ :active-node
+ (fn
+   [db _]
+   (get-in db [:nodes (:active-node db)])))
+
+(defn sum-key [col key]
+  (reduce (fn [acc child]
+            (+ acc (key child)))
+          0
+          col))
+
+;; Given a node, we materialize a tree
+(reg-sub-raw
+ :node->tree
+ (fn [_ [_ node-id]]
+   (reaction
+    (let [node @(subscribe [:node node-id])
+          children (mapv (fn [edge-id] @(subscribe [:edge->child edge-id])) (:child-edges node))]
+      (if (not-empty children)
+
+        ;; Node has children 
+        (let [raw-cost-per-uom (sum-key children :recipe-cost)
+              {:keys [yield]} node
+              cost-with-yield (/ raw-cost-per-uom yield)]
+          (-> node
+              (dissoc :child-edges)
+              (merge {:cost-per-uom cost-with-yield
+                      :recipe-cost raw-cost-per-uom
+                      :children children})))
+
+        ;; Terminate hit bottom node
+        (let [{:keys [yield yield-uom]} node
+              raw-cost-per-uom @(subscribe [:cost-for-uom node-id yield-uom])
+              cost-with-yield (/ raw-cost-per-uom yield)]
+          (-> node
+              (merge {:cost-per-yield-uom cost-with-yield}))))))))
+
+;; Given an edge, we materialize a child node
+(reg-sub-raw
+ :edge->child
+ (fn [_ [_ edge-id]]
+   (reaction
+    (let [edge @(subscribe [:edge edge-id])
+          {:keys [qty uom]} edge
+          node @(subscribe [:node->tree (:child-node edge)])
+          children (:children node)
+          {:keys [id yield-uom]} node
+          cost-per-uom @(subscribe [:cost-for-uom id uom])]
+
+      ;; This is the recipe level and there are no direct costs at
+      ;; this level, instead we need to build from children
+      ;; @TODO - We should just check if this is a childless node and 
+      ;; branch based on that instead of this NaN check.
+      (if (not (js/Number.isNaN cost-per-uom))
+        (-> node
+            (merge edge)
+            (merge {:cost-per-uom cost-per-uom
+                    :recipe-cost (* qty cost-per-uom)})
+            (dissoc :child-edges :child-node))
+
+        (let [raw-cost-per-uom (sum-key children :recipe-cost)
+              factor @(subscribe [:from-uom->uom id yield-uom uom])
+              {:keys [yield]} node
+              cost-with-yield (/ raw-cost-per-uom yield)
+              normalized-cost (/ (/ raw-cost-per-uom yield) factor)]
+
+          ;; Build and return new map
+          (-> node
+              (merge {:cost-per-uom normalized-cost
+                      :cost-per-yield-uom cost-with-yield
+                      :recipe-cost (* qty normalized-cost)})
+              (merge edge)
+              (dissoc :child-edges :child-node))))))))
+
 (comment
+  (dissoc {:a 10 :b 20} :a :b)
   (def cost (get-in default-db [:costs "salt"]))
   (def conversion (get-in default-db [:conversions "salt"]))
   (def to-uom :gram)
@@ -111,88 +194,3 @@
 
   ;; 
   )
-
-(reg-sub
- :child-node
- (fn
-   [db [_ edge]]
-   (get-in db [:nodes (:child-node edge)])))
-
-(defn cost-of-children [col]
-  (reduce (fn [acc {:keys [total-cost]}]
-            (+ acc total-cost))
-          0
-          col))
-
-;; Given a node, we materialize a tree
-(reg-sub-raw
- :node->tree
- (fn [_ [_ node-id]]
-   (reaction
-    (let [node @(subscribe [:node node-id])
-          children (mapv (fn [edge-id] @(subscribe [:edge->child edge-id])) (:child-edges node))]
-      (if (not-empty children)
-
-        ;; Has children
-        (let [raw-cost-per-uom (cost-of-children children)
-              {:keys [yield]} node
-              cost-with-yield (/ raw-cost-per-uom yield)]
-          (-> node
-              (dissoc :child-edges)
-              (merge {:cost-per-uom cost-with-yield
-                      :recipe-cost raw-cost-per-uom
-                      :total-cost raw-cost-per-uom
-                      :children children})))
-
-        ;; Terminate hit bottom
-        (let [{:keys [yield default-uom]} node
-              raw-cost-per-uom @(subscribe [:cost-for-uom node-id default-uom])
-              cost-with-yield (/ raw-cost-per-uom yield)]
-          (-> node
-              (merge {:cost-per-default-uom cost-with-yield}))))))))
-
-;; Given an edge, we materialize a child node
-(reg-sub-raw
- :edge->child
- (fn [_ [_ edge-id]]
-   (reaction
-    (let [edge @(subscribe [:edge edge-id])
-          {:keys [qty uom]} edge
-          node @(subscribe [:node->tree (:child-node edge)])
-          children (:children node)
-          {:keys [id default-uom]} node
-          cost-per-uom @(subscribe [:cost-for-uom id uom])]
-
-      (if (not (js/Number.isNaN cost-per-uom))
-        (-> node
-            (merge edge)
-            (merge {:cost-per-uom cost-per-uom
-                    :total-cost (* qty cost-per-uom)})
-            (dissoc :child-edges)
-            (dissoc :child-node))
-
-        (let [raw-cost-per-uom (cost-of-children children)
-              factor @(subscribe [:from-uom->uom id default-uom uom])
-              {:keys [yield]} node
-              cost-with-yield (/ raw-cost-per-uom yield)
-              normalized-cost (/ (/ raw-cost-per-uom yield) factor)]
-          (-> node
-              (merge {:cost-per-uom normalized-cost
-                      :cost-per-default-uom cost-with-yield
-                      :recipe-cost normalized-cost
-                      :total-cost (* qty normalized-cost)})
-              (merge edge)
-              (dissoc :child-edges)
-              (dissoc :child-node))))))))
-
-(reg-sub
- :active-node-id
- (fn
-   [db _]
-   (:active-node db)))
-
-(reg-sub
- :active-node
- (fn
-   [db _]
-   (get-in db [:nodes (:active-node db)])))

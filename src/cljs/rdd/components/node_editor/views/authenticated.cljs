@@ -5,9 +5,9 @@
    [reagent.core  :as reagent]
    [goog.string :as gstring]
    [goog.string.format]
-   [re-frame.core :as rf :refer [subscribe]]
+   [re-frame.core :as rf :refer [subscribe dispatch]]
    [herb.core :refer [<class]]
-   [re-com.core   :refer [input-text button at]]))
+   [re-com.core   :refer [input-text button single-dropdown at]]))
 
 (defn style []
   {:color "red"
@@ -18,12 +18,51 @@
 
 (defn node-row
   [nt]
-  (let [{:keys [id order name qty children total-cost recipe-cost]} nt]
+  (let [{:keys [id
+                yield
+                edge-id
+                order
+                name
+                qty
+                children
+                recipe-cost
+                cost-per-uom
+                yield-uom
+                uom]} nt]
     (info nt)
-    [:div [:p
+    [:div [:span
            {:class (<class style)}
+           (str name " - " " Recipe Cost: " (gstring/format "%.2f" (str recipe-cost)) " Cost per UOM: " (gstring/format "%.2f" (str cost-per-uom)) " yield " yield)]
+     [:span [input-text
+             :src (at)
+             :model (str qty)
+             :on-change (fn [hey]
+                          (dispatch [:update-edge edge-id {:qty hey}]))]]
+     [single-dropdown
+      :src (at)
+      :model uom
+      :choices [{:id :gram :label "Gram"}
+                {:id :pound :label "Pound"}
+                {:id :kilogram :label "Kilogram"}]
+      :on-change (fn [choice]
+                   (info choice)
+                   (dispatch [:update-edge edge-id {:uom choice}]))]
 
-           (str name " - " order " -> " qty " Cost: " (gstring/format "%.2f" (str total-cost)))]
+     [:span [input-text
+             :src (at)
+             :model (str yield)
+             :on-change (fn [hey]
+                          (dispatch [:update-node id {:yield hey}]))]]
+     [single-dropdown
+      :src (at)
+      :model yield-uom
+      :choices [{:id :gram :label "Gram"}
+                {:id :pound :label "Pound"}
+                {:id :kilogram :label "Kilogram"}]
+      :on-change (fn [choice]
+                   (info choice)
+                   (dispatch [:update-node id {:yield-uom choice}]))]
+
      (if-let [children children]
        [:div
         {:class (<class row-style)}
@@ -34,7 +73,6 @@
             ^{:key key} [node-row child]))])]))
 
 (comment
-
   (rf/dispatch [:update-edge "sauce-1-salt" {:order 1}])
   (rf/dispatch [:set-active-node "sauce-1"])
   (rf/dispatch [:set-active-node "sauce-2"])

@@ -10,40 +10,40 @@
    :nodes {"salt"         {:name "Salt"
                            :id "salt"
                            :yield 1
-                           :default-uom :gram}
+                           :yield-uom :gram}
 
            "pepper"       {:name "Pepper"
                            :id "pepper"
                            :yield 1
-                           :default-uom :gram}
+                           :yield-uom :gram}
 
            "paprika"      {:name "Paprika"
                            :id "paprika"
                            :yield 1
-                           :default-uom :gram}
+                           :yield-uom :gram}
 
            "sauce-1"      {:name "Sauce 1"
                            :id "sauce-1"
                            :yield 1
-                           :default-uom :gram
+                           :yield-uom :gram
                            :child-edges ["sauce-1-salt" "sauce-1-pepper"]}
 
            "sauce-2"      {:name "Sauce 2"
                            :id "sauce-2"
                            :yield 2
-                           :default-uom :gram
+                           :yield-uom :gram
                            :child-edges ["sauce-2-pepper" "sauce-2-paprika"]}
 
            "sauce-blend"  {:name "Sauce Blend"
                            :id "sauce-blend"
                            :yield 2
-                           :default-uom :gram
+                           :yield-uom :gram
                            :child-edges ["sauce-blend-sauce-1" "sauce-blend-sauce-2"]}
 
            "burrito"      {:name "Burrito"
                            :id "burrito"
                            :yield 1
-                           :default-uom "burrito"
+                           :yield-uom "burrito"
                            :child-edges ["burrito-sauce-blend"]}}
 
    :edges {"sauce-1-salt"         {:child-node "salt"
@@ -105,44 +105,45 @@
                        :date 1000
                        :additional-cost 0}]}})
 
-
-
 (def mini-db
   {:active-node "burrito"
 
    :nodes {"salt"         {:name "Salt"
                            :id "salt"
                            :yield 1
-                           :default-uom :gram}
+                           :yield-uom :gram}
 
            "pepper"       {:name "Pepper"
                            :id "pepper"
                            :yield 1
-                           :default-uom :gram}
+                           :yield-uom :gram}
 
            "sauce-1"      {:name "Sauce 1"
                            :id "sauce-1"
                            :yield 650
-                           :default-uom :gram
+                           :yield-uom :gram
                            :child-edges ["sauce-1-salt" "sauce-1-pepper"]}
 
            "burrito"      {:name "Burrito"
                            :id "burrito"
-                           :yield 1
-                           :default-uom "burrito"
+                           :yield 10
+                           :yield-uom "burrito"
                            :child-edges ["burrito-sauce-1"]}}
 
    :edges {"sauce-1-salt"         {:child-node "salt"
+                                   :edge-id "sauce-1-salt"
                                    :qty 1
                                    :uom :pound
                                    :order 1}
 
            "sauce-1-pepper"       {:child-node "pepper"
+                                   :edge-id "sauce-1-pepper"
                                    :qty 1
                                    :uom :pound
                                    :order 2}
 
            "burrito-sauce-1"  {:child-node "sauce-1"
+                               :edge-id "burrito-sauce-1"
                                :qty 50
                                :uom :gram
                                :order 1}}
