@@ -27,6 +27,15 @@
    {:db (assoc db :active-node id)}))
 
 (rf/reg-event-fx
+ :add-node-cost
+ (fn [{:keys [db]} [_ node-id cost]]
+   (info db)
+   {:db (update-in
+         db
+         [:costs node-id]
+         #(conj % cost))}))
+
+(rf/reg-event-fx
  :update-node
  (fn [{:keys [db]} [_ id fields]]
    {:db (update-in db [:nodes id] merge fields)}))

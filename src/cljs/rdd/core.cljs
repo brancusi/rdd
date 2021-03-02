@@ -15,8 +15,8 @@
 
    ;;  Views
    [rdd.views :as views]
-
-   [rdd.fx]))
+   [rdd.fx]
+   [rdd.subs]))
 
 (defn dev-setup []
   (when config/debug?

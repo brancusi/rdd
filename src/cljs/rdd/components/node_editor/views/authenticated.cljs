@@ -3,6 +3,8 @@
    [taoensso.timbre :as timbre
     :refer-macros [log info spy]]
    [reagent.core  :as reagent]
+   [goog.string :as gstring]
+   [goog.string.format]
    [re-frame.core :as rf :refer [subscribe]]
    [herb.core :refer [<class]]
    [re-com.core   :refer [input-text button at]]))
@@ -16,14 +18,12 @@
 
 (defn node-row
   [nt]
-  (let [id (:id nt)
-        order (:order nt)
-        name (:name nt)
-        qty (:qty nt)
-        children (:children nt)]
+  (let [{:keys [id order name qty children total-cost recipe-cost]} nt]
+    (info nt)
     [:div [:p
            {:class (<class style)}
-           (str name " - " order " - " qty)]
+
+           (str name " - " order " -> " qty " Cost: " (gstring/format "%.2f" (str total-cost)))]
      (if-let [children children]
        [:div
         {:class (<class row-style)}
@@ -34,6 +34,7 @@
             ^{:key key} [node-row child]))])]))
 
 (comment
+
   (rf/dispatch [:update-edge "sauce-1-salt" {:order 1}])
   (rf/dispatch [:set-active-node "sauce-1"])
   (rf/dispatch [:set-active-node "sauce-2"])
