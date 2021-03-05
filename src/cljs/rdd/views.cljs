@@ -2,8 +2,8 @@
   (:require
    [taoensso.timbre :as timbre
     :refer-macros [info]]
+   [herb.core :refer [<class]]
    [re-frame.core :as rf :refer [subscribe]]
-
 
   ;;  Components
    [rdd.components.viewers.ednviewer :refer [edn->hiccup]]
@@ -13,6 +13,9 @@
    [re-com.core :as re-com :refer [at]]
    [herb.core :refer [<class]]
    [rdd.subs :as subs]))
+
+(defn main-container-style []
+  {:padding "2rem"})
 
 (defn style []
   {:background "grey"})
@@ -27,7 +30,6 @@
 
 (defn update-node
   [node-id props]
-  (info node-id props)
   (rf/dispatch [:update-node node-id props]))
 
 
@@ -35,12 +37,12 @@
   []
   (let [node-id @(subscribe [:active-node-id])
         node @(subscribe [:active-node])
-        tree @(subscribe [:node->tree node-id])]
+        tree @(subscribe [:node->tree node-id 1])]
     [:<>
     ;;  [nav]
      [node-editor tree]
      [bom-row node-id node (partial update-node node-id)]
-    ;;  [edn->hiccup @(subscribe [:all])]
+    ;;  [edn->hiccup @(subscribe [:db])]
 
      [edn->hiccup tree]]))
     ;;  [edn->hiccup @(subscribe [:all])]]))
@@ -48,6 +50,7 @@
 
 (defn main-panel []
   [re-com/v-box
+   :class (<class main-container-style)
    :src      (at)
    :height   "100%"
    :children [[main]]])

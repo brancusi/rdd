@@ -6,4 +6,4 @@
 (re-frame/reg-event-db
  ::initialize-db
  (fn [_ _]
-   db/mini-db))
+   db/default-db))

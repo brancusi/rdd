@@ -77,7 +77,7 @@
           factor)
 
       ;; No path found
-        "No solution found"))))
+        (str "No solution found for " qty from " to " to)))))
 
 
 (defn cost-for-uom
@@ -106,7 +106,11 @@
 
   (def supson (graph son))
 
-  (uom->uom-factor (get-in default-db [:conversions "salt"]) 25 :case :pinch)
+
+  (get-in default-db [:conversions "sauce-1"])
+  ;; => {"burrito" {:gram 100}}
+
+  (uom->uom-factor (get-in default-db [:conversions "sauce-1"]) 1 "burrito" :gram)
 
   (-> merged-conversions
       generate-reverse-lookups

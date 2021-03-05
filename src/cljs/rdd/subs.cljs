@@ -10,7 +10,7 @@
    [reagent.ratom :as ra :refer [reaction]]))
 
 (reg-sub
- :all
+ :db
  (fn
    [db _]
    db))
@@ -39,6 +39,12 @@
  (fn
    [conversions [_ id]]
    (get-in conversions [id])))
+
+(reg-sub
+ :nodes
+ (fn
+   [db _]
+   (get-in db [:nodes])))
 
 (reg-sub
  :node
@@ -77,7 +83,8 @@
 
 (reg-sub
  :from-uom->uom
- :<- [:conversion]
+ (fn [[_ node-id]]
+   [(subscribe [:conversion node-id])])
  (fn
    [[conversion] [_ _ from-uom to-uom]]
    (uom->uom-factor conversion 1 from-uom to-uom)))
@@ -100,6 +107,20 @@
    [db _]
    (get-in db [:nodes (:active-node db)])))
 
+(reg-sub
+ :active-master-node-id
+ (fn
+   [db _]
+   (get-in db [:editing/active-master-node])))
+
+(reg-sub
+ :active-master-node
+ :<- [:nodes]
+ :<- [:active-master-node-id]
+ (fn
+   [[nodes id] _]
+   (get-in nodes [id])))
+
 (defn sum-key [col key]
   (reduce (fn [acc child]
             (+ acc (key child)))
@@ -109,10 +130,11 @@
 ;; Given a node, we materialize a tree
 (reg-sub-raw
  :node->tree
- (fn [_ [_ node-id]]
+ (fn [_ [_ node-id parent-qty parent-qty-uom]]
    (reaction
     (let [node @(subscribe [:node node-id])
-          children (mapv (fn [edge-id] @(subscribe [:edge->child edge-id])) (:child-edges node))]
+          {:keys [yield yield-uom]} node
+          children (mapv (fn [edge-id] @(subscribe [:edge->child edge-id yield yield-uom parent-qty parent-qty-uom])) (:child-edges node))]
       (if (not-empty children)
 
         ;; Node has children 
@@ -123,6 +145,7 @@
               (dissoc :child-edges)
               (merge {:cost-per-uom cost-with-yield
                       :recipe-cost raw-cost-per-uom
+
                       :children children})))
 
         ;; Terminate hit bottom node
@@ -135,35 +158,72 @@
 ;; Given an edge, we materialize a child node
 (reg-sub-raw
  :edge->child
- (fn [_ [_ edge-id]]
+ (fn [_ [_ edge-id parent-yield parent-yield-uom parent-qty parent-qty-uom]]
    (reaction
     (let [edge @(subscribe [:edge edge-id])
           {:keys [qty uom]} edge
-          node @(subscribe [:node->tree (:child-node edge)])
+          node @(subscribe [:node->tree (:child-node edge) qty uom])
           children (:children node)
-          {:keys [id yield-uom]} node
-          cost-per-uom @(subscribe [:cost-for-uom id uom])]
+          {:keys [id yield-uom name]} node
 
-      ;; This is the recipe level and there are no direct costs at
-      ;; this level, instead we need to build from children
-      ;; @TODO - We should just check if this is a childless node and 
-      ;; branch based on that instead of this NaN check.
+          parent-local-yield-scale-factor @(subscribe [:from-uom->uom id parent-yield-uom uom])
+
+          cost-per-uom @(subscribe [:cost-for-uom id uom])
+          normalized-parent-qty (if parent-qty parent-qty 1)
+          normalized-parent-qty-uom (if parent-qty-uom parent-qty-uom parent-yield-uom)
+
+          parent-qty-yield-scale-factor @(subscribe [:from-uom->uom id normalized-parent-qty-uom parent-yield-uom])
+
+          local-ratio (/ qty (* parent-yield parent-local-yield-scale-factor))
+
+          local-qty (* normalized-parent-qty parent-local-yield-scale-factor parent-qty-yield-scale-factor local-ratio)]
+
       (if (not (js/Number.isNaN cost-per-uom))
+
+        ;; This is the node level and has cost data
         (-> node
             (merge edge)
             (merge {:cost-per-uom cost-per-uom
+
+                    :scale/parent-yield-uom-local-uom-scale-factor parent-local-yield-scale-factor
+                    :scale/parent-qty-uom-parent-yield-uom-scale-factor parent-qty-yield-scale-factor
+
+                    :scale/local-ratio local-ratio
+
+                    :scale/local-qty local-qty
+
+                    :parent-yield parent-yield
+                    :parent-qty normalized-parent-qty
+                    :parent-qty-uom normalized-parent-qty-uom
+                    :parent-yield-uom parent-yield-uom
                     :recipe-cost (* qty cost-per-uom)})
             (dissoc :child-edges :child-node))
 
+        ;; This is the recipe level and there are no direct costs at
+        ;; this level, instead we need to build from children
+        ;; @TODO - We should just check if this is a childless node and 
+        ;; branch based on that instead of this NaN check.
         (let [raw-cost-per-uom (sum-key children :recipe-cost)
-              factor @(subscribe [:from-uom->uom id yield-uom uom])
+              cost-factor @(subscribe [:from-uom->uom id yield-uom uom])
               {:keys [yield]} node
               cost-with-yield (/ raw-cost-per-uom yield)
-              normalized-cost (/ (/ raw-cost-per-uom yield) factor)]
+              normalized-cost (/ (/ raw-cost-per-uom yield) cost-factor)]
 
           ;; Build and return new map
           (-> node
               (merge {:cost-per-uom normalized-cost
+
+                      :scale/parent-yield-uom-local-uom-scale-factor parent-local-yield-scale-factor
+                      :scale/parent-qty-uom-parent-yield-uom-scale-factor parent-qty-yield-scale-factor
+
+                      :scale/local-ratio local-ratio
+
+                      :scale/local-qty local-qty
+
+                      :parent-yield parent-yield
+                      :parent-qty normalized-parent-qty
+                      :parent-qty-uom normalized-parent-qty-uom
+                      :parent-yield-uom parent-yield-uom
                       :cost-per-yield-uom cost-with-yield
                       :recipe-cost (* qty normalized-cost)})
               (merge edge)
@@ -194,3 +254,24 @@
 
   ;; 
   )
+
+
+
+
+{:local/yield 1
+ :parent/parent-qty :gram
+ :edge/edge-id "sauce-1-pepper"
+ :local/name "Pepper"
+ :local/cost-per-yield-uom 0.004409248
+ :parent/parent-qty-uom :gram
+ :local/recipe-cost 0.04409248
+ :scale/parent-yield-uom-local-uom-scale-factor 1000
+ :local/cost-per-uom 0.004409248
+ :local/uom :gram
+ :scale/local-ratio 0.01
+ :local/id "pepper"
+ :local/yield-uom :gram
+ :local/qty 10
+ :local/order 2
+ :parent/parent-yield-uom :kilogram
+ :parent/parent-yield 1}

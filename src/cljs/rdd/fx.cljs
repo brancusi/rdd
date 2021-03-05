@@ -1,6 +1,8 @@
 
 (ns rdd.fx
+  (:require-macros [clojure.string :as str])
   (:require
+   [cljs.pprint :refer [pprint]]
 
    ;; Utils
    [taoensso.timbre :as timbre
@@ -27,9 +29,13 @@
    {:db (assoc db :active-node id)}))
 
 (rf/reg-event-fx
+ :set-active-master-node
+ (fn [{:keys [db]} [_ id]]
+   {:db (assoc db :editing/active-master-node id)}))
+
+(rf/reg-event-fx
  :add-node-cost
  (fn [{:keys [db]} [_ node-id cost]]
-   (info db)
    {:db (update-in
          db
          [:costs node-id]
@@ -51,18 +57,38 @@
    {:db (assoc-in db [:nodes id] fields)}))
 
 (defn add-edge
-  [db uuid to qty]
-  (assoc-in db [:edges uuid] {:child-node to :qty qty}))
+  [db uuid {:keys [to uom qty]}]
+  (assoc-in db [:edges uuid] {:child-node to :qty qty :uom uom :edge-id uuid :order 1}))
 
 (defn relate-edge
   [from uuid db]
-  (->> (assoc-in db [:nodes from :child-edges] [uuid])))
+  (update-in
+   db
+   [:nodes from :child-edges]
+   #(conj % uuid))
 
-(rf/reg-event-fx :add-child (fn [{:keys [db]} [_ from to qty]]
-                              (let [uuid (nano-id)
-                                    new-db (->> (add-edge db uuid to qty)
-                                                (relate-edge from uuid))]
-                                {:db new-db})))
+  ;; (->> (assoc-in db [:nodes from :child-edges] [uuid]))
+  )
+
+(rf/reg-event-fx
+ :add-child
+ (fn [{:keys [db]} [_ parent-id child-id]]
+   (let [edge-id (nano-id)
+         child-node (get-in db [:nodes child-id])
+         {:keys [yield-uom]} child-node]
+     {:db (->> (add-edge db edge-id {:from parent-id
+                                     :to child-id
+                                     :uom yield-uom
+                                     :qty 1})
+               (relate-edge parent-id edge-id))})))
+
+
+{:child-node "salt"
+ :edge-id "sauce-1-salt"
+ :qty 10
+ :uom :gram
+ :order 1}
+
 
 (rf/reg-event-fx :reset (fn [_ _]
                           {:db default-db}))
