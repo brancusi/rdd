@@ -35,18 +35,19 @@
 
 (defn main
   []
-  (let [node-id @(subscribe [:active-node-id])
-        node @(subscribe [:active-node])
+  (let [node-id @(subscribe [:selected-node-id])
+        node @(subscribe [:selected-node])
         tree @(subscribe [:node->tree node-id 1])]
     [:<>
     ;;  [nav]
      [node-editor tree]
      [bom-row node-id node (partial update-node node-id)]
-    ;;  [edn->hiccup @(subscribe [:db])]
+     [edn->hiccup @(subscribe [:db])]
 
-     [edn->hiccup tree]]))
+    ;;  [edn->hiccup tree]
+     ]))
     ;;  [edn->hiccup @(subscribe [:all])]]))
-    ;; [edn->hiccup @(subscribe [:node->tree @(subscribe [:active-node-id])])]
+    ;; [edn->hiccup @(subscribe [:node->tree @(subscribe [:selected-node-id])])]
 
 (defn main-panel []
   [re-com/v-box

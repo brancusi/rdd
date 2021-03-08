@@ -96,22 +96,22 @@
    (get-in db [:nodes (:child-node edge)])))
 
 (reg-sub
- :active-node-id
+ :selected-node-id
  (fn
    [db _]
-   (:active-node db)))
+   (:selected-node db)))
 
 (reg-sub
- :active-node
+ :selected-node
  (fn
    [db _]
-   (get-in db [:nodes (:active-node db)])))
+   (get-in db [:nodes (:selected-node db)])))
 
 (reg-sub
  :active-master-node-id
  (fn
    [db _]
-   (get-in db [:editing/active-master-node])))
+   (get-in db [:editing :node/id])))
 
 (reg-sub
  :active-master-node
@@ -243,8 +243,8 @@
 
   (cost-for-uom cost conversion :pound)
 
-  (rf/dispatch [:set-active-node "sauce-1"])
-  (rf/dispatch [:set-active-node "burrito"])
+  (rf/dispatch [:set-selected-node "sauce-1"])
+  (rf/dispatch [:set-selected-node "burrito"])
 
   (rf/dispatch [:add-node-cost "salt" {:cost 1
                                        :qty 1
@@ -272,6 +272,6 @@
  :local/id "pepper"
  :local/yield-uom :gram
  :local/qty 10
- :local/order 2
+ :local/index 2
  :parent/parent-yield-uom :kilogram
  :parent/parent-yield 1}

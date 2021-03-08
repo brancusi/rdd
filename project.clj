@@ -10,11 +10,13 @@
                  [metosin/reitit "0.5.12"]
                  [reagent "1.0.0"]
                  [aysylu/loom "1.0.2"]
+
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
                  [devcards "0.2.7"]
                  [herb "0.10.0"]
                  [garden "1.3.10"]
+
                  [ns-tracker "0.4.0"]]
 
   :plugins [[lein-shadow "0.3.1"]
@@ -42,7 +44,11 @@
                                :closure-defines {re-com.config/root-url-for-compiler-output "http://localhost:8280/js/compiled/cljs-runtime/"}
                                :asset-path "/js/compiled"
                                :modules {:app {:init-fn rdd.core/init
-                                               :preloads [devtools.preload]}}
+                                               :preloads [devtools.preload day8.re-frame-10x.preload]}}
+                               :dev        {:compiler-options {:closure-defines {re-frame.trace.trace-enabled?        true
+                                                                                 day8.re-frame-10x.debug?             true
+                                                                                 day8.re-frame.tracing.trace-enabled? true}
+                                                               :external-config  {:devtools/config {:features-to-install [:formatters :hints]}}}}
                                :devtools {:http-root "resources/public"
                                           :http-port 8280}}}}
 
@@ -76,9 +82,11 @@
                             ["shadow" "compile" "karma-test"]
                             ["shell" "karma" "start" "--single-run" "--reporters" "junit,dots"]]}
 
+
   :profiles
   {:dev
-   {:dependencies [[binaryage/devtools "1.0.2"]]
+   {:dependencies [[binaryage/devtools "1.0.2"]
+                   [day8.re-frame/re-frame-10x "1.0.1"]]
     :source-paths ["dev"]}
 
    :prod {}}

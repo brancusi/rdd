@@ -3,8 +3,6 @@
   (:require-macros [clojure.string :as str])
   (:require
    [cljs.pprint :refer [pprint]]
-
-   ;; Utils
    [taoensso.timbre :as timbre
     :refer-macros [info]]
 
@@ -24,14 +22,14 @@
    data))
 
 (rf/reg-event-fx
- :set-active-node
+ :set-selected-node
  (fn [{:keys [db]} [_ id]]
-   {:db (assoc db :active-node id)}))
+   {:db (assoc db :selected-node id)}))
 
 (rf/reg-event-fx
  :set-active-master-node
  (fn [{:keys [db]} [_ id]]
-   {:db (assoc db :editing/active-master-node id)}))
+   {:db (assoc-in db [:editing :node/id] id)}))
 
 (rf/reg-event-fx
  :add-node-cost
@@ -58,17 +56,14 @@
 
 (defn add-edge
   [db uuid {:keys [to uom qty]}]
-  (assoc-in db [:edges uuid] {:child-node to :qty qty :uom uom :edge-id uuid :order 1}))
+  (assoc-in db [:edges uuid] {:child-node to :qty qty :uom uom :edge-id uuid :index 1}))
 
 (defn relate-edge
   [from uuid db]
   (update-in
    db
    [:nodes from :child-edges]
-   #(conj % uuid))
-
-  ;; (->> (assoc-in db [:nodes from :child-edges] [uuid]))
-  )
+   #(conj % uuid)))
 
 (rf/reg-event-fx
  :add-child
@@ -82,13 +77,11 @@
                                      :qty 1})
                (relate-edge parent-id edge-id))})))
 
-
 {:child-node "salt"
  :edge-id "sauce-1-salt"
  :qty 10
  :uom :gram
- :order 1}
-
+ :index 1}
 
 (rf/reg-event-fx :reset (fn [_ _]
                           {:db default-db}))

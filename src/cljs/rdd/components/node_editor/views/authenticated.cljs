@@ -4,31 +4,18 @@
     :refer-macros [log info spy]]
    [reagent.core  :as reagent]
    [goog.string :as gstring]
+   [rdd.components.add-node-row.subs]
+   [rdd.components.node-editor.subs]
+   [rdd.components.node-editor.fx]
    [rdd.components.viewers.ednviewer :refer [edn->hiccup]]
    [goog.string.format]
    [re-frame.core :as rf :refer [subscribe dispatch]]
+   [rdd.components.add-node-row.view :refer [add-node-editor]]
    [herb.core :refer [<class]]
    [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box]]))
 
-(defn title-style []
-  {:color "0x2B2B2B"
-   :font-size "3rem"})
-
-(defn style []
-  {:color "red"
-   :font-size "2rem"})
-
 (defn row-style []
   {:padding-left "2rem"})
-
-(defn pad-left [x]
-  {:padding-left x})
-
-(defn margin-right [x]
-  {:margin-right x})
-
-(defn margin-left [x]
-  {:margin-left x})
 
 (defn qty-editor
   [nt]
@@ -79,13 +66,25 @@
                                           (dispatch [:update-node id {:yield-uom choice}]))]]]]]))
 
 (defn node-row
+
   "Build a node row. Expects a node-tree and if this the top level node"
-  [nt active-master-node editing?]
-  (let [{:keys [name children uom id]} nt
-        {:scale/keys [local-qty]} nt
-        is-active-master? (=  id (:id active-master-node))
+
+  [{:keys [tree
+           active-master-node
+           editing-settings
+           parent-node-id
+           states]
+    {:keys [id name children uom index]} :tree
+    {:scale/keys [local-qty]} :tree}]
+
+  (let [is-active-master? (=  id (:id active-master-node))
         set-active-editor #(rf/dispatch [:set-active-master-node %])
-        add-edge #(rf/dispatch [:add-child %1 %2])]
+        add-edge #(rf/dispatch [:add-child %1 %2])
+        add-temp-node #(dispatch [:add-temp-node %1 %2])
+        node-editor-state (:node-editor states)
+        is-adding-node? (and
+                         (= :adding-node (:state node-editor-state))
+                         (= parent-node-id (:node/id node-editor-state)))]
     [v-box
      :class "border-2 my-1 py-2"
      :children [[h-box
@@ -96,49 +95,40 @@
                                      :on-click #(set-active-editor id)
                                      :class "cursor-pointer"
                                      :label (str name)]]
-                            (if editing?
-                              (qty-editor nt)
-                              nil)
 
+                            ;; TODO: Need to think about how to toggle this flag
+                            (if false
+                              (qty-editor tree)
+                              nil)
 
                             [:span
                              {:class "ml-8"}
-                             (str local-qty " - " uom)]
-
+                             (str local-qty " - " uom " - Index - " index)]
 
                             [box
                              :class "ml-8"
                              :child [button
                                      :label "Add below"
-                                     :on-click (fn [] (info "Clicked"))]]
-
-                            [box
-                             :class "ml-8"
-                             :child [button
-                                     :label "Pepper 2"
-                                     :on-click #(add-edge id "pepper2")]]
-
-                            [box
-                             :class "ml-8"
-                             :child [button
-                                     :label "Pepper 3"
-                                     :on-click #(add-edge id "pepper3")]]
-
-                            [box
-                             :class "ml-8"
-                             :child [button
-                                     :label "Pepper 4"
-                                     :on-click #(add-edge id "pepper4")]]
+                                     :on-click #(add-temp-node parent-node-id index)]]
 
                             ;; 
                             ]]
+                (info is-adding-node? node-editor-state)
+                (when is-adding-node?
+                  [:div "Here"])
 
                 (if-let [children children]
                   [v-box
                    :class (<class row-style)
-                   :children [(for [child (sort-by :order children)]
-                                (let [{:keys [id edge-id]} child]
+                   :children [(for [child (sort-by :index children)]
+                                (let [{:keys [edge-id]} child]
                                   ^{:key edge-id} [node-row
+
+                                                   {:tree child
+                                                    :parent-node-id id
+                                                    :active-master-node active-master-node
+                                                    :states states}
+
                                                    child
                                                    active-master-node
                                                    is-active-master?]))
@@ -148,52 +138,30 @@
                                  :children [[box
                                              :size "150px"
                                              :child "This recipe makes"]
-                                            (yield-editor nt)
-
-
+                                            (yield-editor tree)
 
                                             ;; 
                                             ]]
                                 nil)]])]]))
 
 
-
-
-
-(comment
-
-  (rf/dispatch [:set-active-master-node "burrito"])
-  (rf/dispatch [:set-active-master-node "sauce-1"])
-
-
-  (rf/dispatch [:update-edge "sauce-1-salt" {:order 1}])
-  (rf/dispatch [:update-edge "sauce-1-salt" {:order 1}])
-  (rf/dispatch [:set-active-node "sauce-1"])
-
-  (rf/dispatch [:set-active-node "sauce-2"])
-  (rf/dispatch [:set-active-node "burrito"])
-  (rf/dispatch [:update-edge "sauce-1-salt" {:qty 20}])
-
-  ;; 
-  )
-
 (defn node-editor
-  [nt]
+  [tree]
   (let [active-master-node @(subscribe [:active-master-node])
+        states @(subscribe [:states])
         {:keys [id
                 yield
                 edge-id
-                order
                 name
                 qty
                 children
                 recipe-cost
                 cost-per-uom
                 yield-uom
-                uom]} nt]
+                uom]} tree]
     [:div
      [:h1 {:class "my-8 text-4xl"} "Recipe editor"]
-     [edn->hiccup active-master-node]
+    ;;  [edn->hiccup active-master-node]
 
      [h-box
       :class "my-8"
@@ -206,5 +174,8 @@
                   :on-click (fn []
                               (rf/dispatch [:set-active-master-node "burrito"]))]]]
 
-     [node-row nt active-master-node]]))
+     [node-row
+      {:tree tree
+       :active-master-node active-master-node
+       :states states}]]))
 

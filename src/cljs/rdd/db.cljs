@@ -1,14 +1,21 @@
 (ns rdd.db
   (:require [re-frame.core :as rf]
+            [cljs.spec.gen.alpha :as gen]
             [taoensso.timbre :as timbre
              :refer-macros [log info spy]]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as spec]))
+
 
 
 (def default-db
-  {:active-node "burrito"
+  {:selected-node "burrito"
 
-   :editing/active-master-node "sauce-1"
+   :editing {:master-node/id "burrito"
+             :state [:editing :adding-node]}
+
+   :states {:node-editor {:state :adding-node
+                          :node/id "sauce-1"
+                          :previous-index 1}}
 
    :nodes {"salt"         {:name "Salt"
                            :id "salt"
@@ -19,28 +26,6 @@
                            :id "pepper"
                            :yield 1
                            :yield-uom :gram}
-
-           "pepper2"       {:name "Pepper 2"
-                            :id "pepper2"
-                            :yield 1
-                            :yield-uom :gram}
-
-
-           "pepper3"       {:name "Pepper 3"
-                            :id "pepper3"
-                            :yield 1
-                            :yield-uom :gram}
-
-
-           "pepper4"       {:name "Pepper 4"
-                            :id "pepper4"
-                            :yield 1
-                            :yield-uom :gram}
-
-           "pepper5"       {:name "Pepper 5"
-                            :id "pepper5"
-                            :yield 1
-                            :yield-uom :gram}
 
            "sauce-1"      {:name "Sauce 1"
                            :id "sauce-1"
@@ -58,19 +43,19 @@
                                    :edge-id "sauce-1-salt"
                                    :qty 10
                                    :uom :gram
-                                   :order 1}
+                                   :index 1}
 
            "sauce-1-pepper"       {:child-node "pepper"
                                    :edge-id "sauce-1-pepper"
                                    :qty 10
                                    :uom :gram
-                                   :order 2}
+                                   :index 2}
 
            "burrito-sauce-1"  {:child-node "sauce-1"
                                :edge-id "burrito-sauce-1"
                                :qty 100
                                :uom :gram
-                               :order 1}}
+                               :index 1}}
 
    :conversions {"salt" {:cup    {:gram 10}
                          :case   {:pack 25}
@@ -88,14 +73,9 @@
                        :qty 1
                        :uom :pound
                        :date 1
-                       :additional-cost 0}]
-
-           "pepper4"  [{:cost 2
-                        :qty 1
-                        :uom :pound
-                        :date 1
-                        :additional-cost 0}]}})
+                       :additional-cost 0}]}})
 
 (defn seed-db
   []
   (rf/dispatch [:reset-db-with default-db]));
+
