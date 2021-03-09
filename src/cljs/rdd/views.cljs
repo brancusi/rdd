@@ -42,7 +42,7 @@
     ;;  [nav]
      [node-editor tree]
      [bom-row node-id node (partial update-node node-id)]
-     [edn->hiccup @(subscribe [:db])]
+    ;;  [edn->hiccup @(subscribe [:db])]
 
     ;;  [edn->hiccup tree]
      ]))

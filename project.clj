@@ -25,7 +25,7 @@
 
   :min-lein-version "2.9.0"
 
-  :source-paths ["src/clj" "src/cljs"]
+  :source-paths ["src/cljs" "src/clj"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"
                                     "resources/public/css"]
@@ -38,7 +38,6 @@
                                     :pretty-print? true}}]}
 
   :shadow-cljs {:nrepl {:port 8777}
-
                 :builds {:app {:target :browser
                                :output-dir "resources/public/js/compiled"
                                :closure-defines {re-com.config/root-url-for-compiler-output "http://localhost:8280/js/compiled/cljs-runtime/"}

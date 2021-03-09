@@ -14,6 +14,7 @@
    [herb.core :refer [<class]]
    [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box]]))
 
+
 (defn row-style []
   {:padding-left "2rem"})
 
@@ -71,7 +72,6 @@
 
   [{:keys [tree
            active-master-node
-           editing-settings
            parent-node-id
            states]
     {:keys [id name children uom index]} :tree
@@ -79,12 +79,13 @@
 
   (let [is-active-master? (=  id (:id active-master-node))
         set-active-editor #(rf/dispatch [:set-active-master-node %])
-        add-edge #(rf/dispatch [:add-child %1 %2])
         add-temp-node #(dispatch [:add-temp-node %1 %2])
         node-editor-state (:node-editor states)
         is-adding-node? (and
                          (= :adding-node (:state node-editor-state))
-                         (= parent-node-id (:node/id node-editor-state)))]
+                         (= parent-node-id (:node/id node-editor-state))
+                         (= index (:previous-index node-editor-state)))]
+
     [v-box
      :class "border-2 my-1 py-2"
      :children [[h-box
@@ -97,7 +98,7 @@
                                      :label (str name)]]
 
                             ;; TODO: Need to think about how to toggle this flag
-                            (if false
+                            (if true
                               (qty-editor tree)
                               nil)
 
@@ -113,9 +114,10 @@
 
                             ;; 
                             ]]
-                (info is-adding-node? node-editor-state)
+
                 (when is-adding-node?
-                  [:div "Here"])
+                  [add-node-editor {:parent-node-id parent-node-id
+                                    :tree tree}])
 
                 (if-let [children children]
                   [v-box
