@@ -33,6 +33,7 @@
   (rf/dispatch [:update-node node-id props]))
 
 
+
 (defn main
   []
   (let [node-id @(subscribe [:selected-node-id])
@@ -45,6 +46,7 @@
     ;;  [edn->hiccup @(subscribe [:db])]
 
     ;;  [edn->hiccup tree]
+    ;;  
      ]))
     ;;  [edn->hiccup @(subscribe [:all])]]))
     ;; [edn->hiccup @(subscribe [:node->tree @(subscribe [:selected-node-id])])]

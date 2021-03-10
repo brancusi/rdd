@@ -211,21 +211,29 @@
        :yield-uom :gram})
     names)))
 
+(comment
+  (names->nodes (take 10 spice-names))
+;;  
+  )
+
 (def internal-nodes {"salt"         {:name "Salt"
                                      :id "salt"
                                      :yield 1
-                                     :yield-uom :gram}
+                                     :yield-uom :gram
+                                     :parent-edges ["sauce-1-salt"]}
 
                      "pepper"       {:name "Pepper"
                                      :id "pepper"
                                      :yield 1
-                                     :yield-uom :gram}
+                                     :yield-uom :gram
+                                     :parent-edges ["sauce-1-pepper"]}
 
                      "sauce-1"      {:name "Sauce 1"
                                      :id "sauce-1"
                                      :yield 1
                                      :yield-uom :kilogram
-                                     :child-edges ["sauce-1-salt" "sauce-1-pepper"]}
+                                     :child-edges ["sauce-1-salt" "sauce-1-pepper"]
+                                     :parent-edges ["burrito-sauce-1"]}
 
                      "burrito"      {:name "Burrito"
                                      :id "burrito"
@@ -234,32 +242,27 @@
                                      :child-edges ["burrito-sauce-1"]}})
 
 
-
 (def default-db
   {:selected-node "burrito"
 
-   :editing {:master-node/id "burrito"
-             :state [:editing :adding-node]}
+   :nodes (merge (names->nodes (take 10 spice-names)) internal-nodes)
 
-   :states {:node-editor {:state :adding-node
-                          :node/id "sauce-1"
-                          :previous-index 1}}
-
-   :nodes (merge (names->nodes spice-names) internal-nodes)
-
-   :edges {"sauce-1-salt"         {:child-node "salt"
+   :edges {"sauce-1-salt"         {:parent-node "sauce-1"
+                                   :child-node "salt"
                                    :edge-id "sauce-1-salt"
                                    :qty 10
                                    :uom :gram
                                    :index 1}
 
-           "sauce-1-pepper"       {:child-node "pepper"
+           "sauce-1-pepper"       {:parent-node "sauce-1"
+                                   :child-node "pepper"
                                    :edge-id "sauce-1-pepper"
                                    :qty 10
                                    :uom :gram
                                    :index 2}
 
-           "burrito-sauce-1"  {:child-node "sauce-1"
+           "burrito-sauce-1"  {:parent-node "burrito"
+                               :child-node "sauce-1"
                                :edge-id "burrito-sauce-1"
                                :qty 100
                                :uom :gram

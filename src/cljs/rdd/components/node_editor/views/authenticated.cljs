@@ -73,19 +73,16 @@
   [{:keys [tree
            active-master-node
            parent-node-id
-           states]
-    {:keys [id name children uom index]} :tree
+           state]
+    {:keys [id name children uom index edge-id]} :tree
     {:scale/keys [local-qty]} :tree}]
 
   (let [is-active-master? (=  id (:id active-master-node))
         set-active-editor #(rf/dispatch [:set-active-master-node %])
-        add-temp-node #(dispatch [:add-temp-node %1 %2])
-        node-editor-state (:node-editor states)
-        is-adding-node? (and
-                         (= :adding-node (:state node-editor-state))
-                         (= parent-node-id (:node/id node-editor-state))
-                         (= index (:previous-index node-editor-state)))]
+        add-edge #(dispatch [:add-child %1 index %2 {:state :editing}])
+        is-editing? (= state :editing)]
 
+    (info state)
     [v-box
      :class "border-2 my-1 py-2"
      :children [[h-box
@@ -98,7 +95,7 @@
                                      :label (str name)]]
 
                             ;; TODO: Need to think about how to toggle this flag
-                            (if true
+                            (if false
                               (qty-editor tree)
                               nil)
 
@@ -110,26 +107,26 @@
                              :class "ml-8"
                              :child [button
                                      :label "Add below"
-                                     :on-click #(add-temp-node parent-node-id index)]]
+                                     :on-click #(add-edge parent-node-id index)]]
 
                             ;; 
                             ]]
 
-                (when is-adding-node?
-                  [add-node-editor {:parent-node-id parent-node-id
+                (when is-editing?
+                  [add-node-editor {:edge-id edge-id
                                     :tree tree}])
 
                 (if-let [children children]
                   [v-box
                    :class (<class row-style)
                    :children [(for [child (sort-by :index children)]
-                                (let [{:keys [edge-id]} child]
+                                (let [{:keys [edge-id state]} child]
                                   ^{:key edge-id} [node-row
 
                                                    {:tree child
                                                     :parent-node-id id
                                                     :active-master-node active-master-node
-                                                    :states states}
+                                                    :state state}
 
                                                    child
                                                    active-master-node
@@ -163,7 +160,7 @@
                 uom]} tree]
     [:div
      [:h1 {:class "my-8 text-4xl"} "Recipe editor"]
-    ;;  [edn->hiccup active-master-node]
+    ;;  [edn->hiccup tree]
 
      [h-box
       :class "my-8"

@@ -7,6 +7,7 @@
     :refer-macros [info]]
 
    [rdd.db :refer [default-db]]
+   [rdd.interceptors.db-interceptors :refer [re-index-edges]]
 
    [re-frame.core :as rf]
    [nano-id.core :refer [nano-id]]))
@@ -54,10 +55,6 @@
  (fn [{:keys [db]} [_ id fields]]
    {:db (assoc-in db [:nodes id] fields)}))
 
-(defn add-edge
-  [db uuid {:keys [to uom qty]}]
-  (assoc-in db [:edges uuid] {:child-node to :qty qty :uom uom :edge-id uuid :index 1}))
-
 (defn relate-edge
   [from uuid db]
   (update-in
@@ -67,21 +64,21 @@
 
 (rf/reg-event-fx
  :add-child
- (fn [{:keys [db]} [_ parent-id child-id]]
+ [rf/trim-v]
+ (fn [{:keys [db]} [parent-id index child-id opts]]
    (let [edge-id (nano-id)
          child-node (get-in db [:nodes child-id])
-         {:keys [yield-uom]} child-node]
-     {:db (->> (add-edge db edge-id {:from parent-id
-                                     :to child-id
-                                     :uom yield-uom
-                                     :qty 1})
-               (relate-edge parent-id edge-id))})))
+         {:keys [yield-uom]} child-node
+         opts (if opts opts {})]
+     {:db (->>
+           (assoc-in db [:edges edge-id] (merge {:child-node child-id
+                                                 :parent-node parent-id
+                                                 :qty 1
+                                                 :uom yield-uom
+                                                 :edge-id edge-id
+                                                 :index index} opts))
 
-{:child-node "salt"
- :edge-id "sauce-1-salt"
- :qty 10
- :uom :gram
- :index 1}
+           (relate-edge parent-id edge-id))})))
 
 (rf/reg-event-fx :reset (fn [_ _]
                           {:db default-db}))
