@@ -134,7 +134,10 @@
    (reaction
     (let [node @(subscribe [:node node-id])
           {:keys [yield yield-uom]} node
-          children (mapv (fn [edge-id] @(subscribe [:edge->child edge-id yield yield-uom parent-qty parent-qty-uom])) (:child-edges node))]
+          children (mapv
+                    (fn [edge-id]
+                      @(subscribe [:edge->child edge-id yield yield-uom parent-qty parent-qty-uom]))
+                    (:child-edges node))]
       (if (not-empty children)
 
         ;; Node has children 
@@ -145,7 +148,6 @@
               (dissoc :child-edges)
               (merge {:cost-per-uom cost-with-yield
                       :recipe-cost raw-cost-per-uom
-
                       :children children})))
 
         ;; Terminate hit bottom node
@@ -162,36 +164,37 @@
    (reaction
     (let [edge @(subscribe [:edge edge-id])
           {:keys [qty uom]} edge
+
           node @(subscribe [:node->tree (:child-node edge) qty uom])
+
           children (:children node)
-          {:keys [id yield-uom name]} node
+
+          {:keys [id yield-uom]} node
 
           parent-local-yield-scale-factor @(subscribe [:from-uom->uom id parent-yield-uom uom])
 
           cost-per-uom @(subscribe [:cost-for-uom id uom])
+          missing-cost? (js/Number.isNaN cost-per-uom)
+
           normalized-parent-qty (if parent-qty parent-qty 1)
           normalized-parent-qty-uom (if parent-qty-uom parent-qty-uom parent-yield-uom)
-
           parent-qty-yield-scale-factor @(subscribe [:from-uom->uom id normalized-parent-qty-uom parent-yield-uom])
 
+          ;; TODO: Extract these out so we can test
           local-ratio (/ qty (* parent-yield parent-local-yield-scale-factor))
-
           local-qty (* normalized-parent-qty parent-local-yield-scale-factor parent-qty-yield-scale-factor local-ratio)]
 
-      (if (not (js/Number.isNaN cost-per-uom))
+      (if (empty? children)
 
         ;; This is the node level and has cost data
         (-> node
             (merge edge)
             (merge {:cost-per-uom cost-per-uom
-
+                    :cost/missing-cost? missing-cost?
                     :scale/parent-yield-uom-local-uom-scale-factor parent-local-yield-scale-factor
                     :scale/parent-qty-uom-parent-yield-uom-scale-factor parent-qty-yield-scale-factor
-
                     :scale/local-ratio local-ratio
-
                     :scale/local-qty local-qty
-
                     :parent-yield parent-yield
                     :parent-qty normalized-parent-qty
                     :parent-qty-uom normalized-parent-qty-uom
@@ -201,8 +204,6 @@
 
         ;; This is the recipe level and there are no direct costs at
         ;; this level, instead we need to build from children
-        ;; @TODO - We should just check if this is a childless node and 
-        ;; branch based on that instead of this NaN check.
         (let [raw-cost-per-uom (sum-key children :recipe-cost)
               cost-factor @(subscribe [:from-uom->uom id yield-uom uom])
               {:keys [yield]} node
@@ -212,14 +213,10 @@
           ;; Build and return new map
           (-> node
               (merge {:cost-per-uom normalized-cost
-
                       :scale/parent-yield-uom-local-uom-scale-factor parent-local-yield-scale-factor
                       :scale/parent-qty-uom-parent-yield-uom-scale-factor parent-qty-yield-scale-factor
-
                       :scale/local-ratio local-ratio
-
                       :scale/local-qty local-qty
-
                       :parent-yield parent-yield
                       :parent-qty normalized-parent-qty
                       :parent-qty-uom normalized-parent-qty-uom
@@ -228,50 +225,3 @@
                       :recipe-cost (* qty normalized-cost)})
               (merge edge)
               (dissoc :child-edges :child-node))))))))
-
-(comment
-  (dissoc {:a 10 :b 20} :a :b)
-  (def cost (get-in default-db [:costs "salt"]))
-  (def conversion (get-in default-db [:conversions "salt"]))
-  (def to-uom :gram)
-
-  (/ 10 10 453)
-
-  (uom->uom-factor conversion 10 :pound :pound)
-
-  cost
-
-  (cost-for-uom cost conversion :pound)
-
-  (rf/dispatch [:set-selected-node "sauce-1"])
-  (rf/dispatch [:set-selected-node "burrito"])
-
-  (rf/dispatch [:add-node-cost "salt" {:cost 1
-                                       :qty 1
-                                       :uom :pound
-                                       :date 100007
-                                       :additional-cost 0}])
-
-  ;; 
-  )
-
-
-
-
-{:local/yield 1
- :parent/parent-qty :gram
- :edge/edge-id "sauce-1-pepper"
- :local/name "Pepper"
- :local/cost-per-yield-uom 0.004409248
- :parent/parent-qty-uom :gram
- :local/recipe-cost 0.04409248
- :scale/parent-yield-uom-local-uom-scale-factor 1000
- :local/cost-per-uom 0.004409248
- :local/uom :gram
- :scale/local-ratio 0.01
- :local/id "pepper"
- :local/yield-uom :gram
- :local/qty 10
- :local/index 2
- :parent/parent-yield-uom :kilogram
- :parent/parent-yield 1}

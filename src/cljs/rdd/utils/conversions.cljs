@@ -130,11 +130,7 @@
   (uom->uom-factor (get-in default-db [:conversions "sauce-1"]) 1 "burrito" :gram)
 
   (-> merged-conversions
-      generate-reverse-lookups
-      pprint
-      info)
-
-  son
+      generate-reverse-lookups)
 
   (nodes supson)
 

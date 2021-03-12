@@ -2,7 +2,10 @@
   (:require
    [re-frame.core :as rf]
    [taoensso.timbre :as timbre :refer-macros [log info spy]]
+   [cljs.pprint :refer [pprint]]
+   [nano-id.core :refer [nano-id]]
    [rdd.db :refer [default-db]]
+
    [rdd.utils.db-utils :as db-utils]
    [clojure.data :as data]))
 
@@ -32,48 +35,35 @@
              col)
        vec))
 
-(def re-index-edges
+(defn generate-uuid
+  "Interceptor to generate a UUID. Add a key to assoc in the effects map to be used by other interceptors and fx"
+  [key]
   (rf/->interceptor
-   :id :re-index-edges
+   :id :generate-uuid
    :before (fn
              [context]
-             (let [db (rf/get-coeffect context :db)]
+             (rf/assoc-coeffect context key (nano-id)))))
 
-
-               (rf/assoc-coeffect context :db db)))
+(def re-index-edges
+  "Interceptor to re-index the edges in order based on adding of new edges.
+   This interceptor works in tandem with the (generate-uuid :edge-id).
+   This puts a key in the coeffects map that will be used to insert the new edge"
+  (rf/->interceptor
+   :id :re-index-edges
    :after (fn
             [context]
-
-
             (let [db (rf/get-effect context :db)
-                  [_ edge-id _ _] (do
-                                    (info "here" (rf/get-coeffect context :event))
-                                    (rf/get-coeffect context :event))
-                  siblings (do
-                             (info edge-id)
-                             (info db)
-                             (info (db-utils/edge-siblings db edge-id))
-                             (db-utils/edge-siblings db edge-id))
+                  edge-id (or
+                           (rf/get-coeffect context :edge-id)
+                           (get (rf/get-coeffect context :original-event) 1))
+                  siblings (db-utils/edge-siblings db edge-id)
                   sorted-siblings (sort-indexes siblings edge-id)
-
-
                   re-indexed-edges (map-indexed (fn [idx edge]
-                                                  (assoc edge :index (inc idx) :another "HI"))
+                                                  (assoc edge :index (inc idx)))
                                                 sorted-siblings)
-
                   updated-db (reduce
                               (fn [acc {:keys [edge-id] :as edge}]
                                 (assoc-in acc [:edges edge-id] edge))
                               db
                               re-indexed-edges)]
-
               (rf/assoc-effect context :db updated-db)))))
-
-
-(sort-indexes "salt" [{:index 1 :id "pepper"}
-                      {:index 10 :id "other"}
-                      {:index 2 :id "cayanne"}
-                      {:index 5 :id "thyme"}
-                      {:index 1 :id "salt"}
-                      {:index 4 :id "cumin"}
-                      {:index 9 :id "wheat"}])

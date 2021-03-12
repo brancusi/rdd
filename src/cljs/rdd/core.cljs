@@ -24,6 +24,11 @@
     (info "dev mode")))
 
 (defn ^:dev/after-load mount-root []
+
+  ;; Restart DB on each save. Disable if you want to retain state
+  ;; across saves
+  (rf/dispatch-sync [::events/initialize-db])
+
   (rf/clear-subscription-cache!)
   (styles/inject-trace-styles js/document)
   (let [root-el (.getElementById js/document "app")]

@@ -230,9 +230,9 @@
 
                      "sauce-1"      {:name "Sauce 1"
                                      :id "sauce-1"
-                                     :yield 1
-                                     :yield-uom :kilogram
-                                     :child-edges ["sauce-1-salt" "sauce-1-pepper"]
+                                     :yield 500
+                                     :yield-uom :gram
+                                     :child-edges ["sauce-1-salt" "edge-with-new-state" "sauce-1-pepper"]
                                      :parent-edges ["burrito-sauce-1"]}
 
                      "burrito"      {:name "Burrito"
@@ -247,32 +247,38 @@
 
    :nodes (merge (names->nodes (take 10 spice-names)) internal-nodes)
 
-   :edges {"sauce-1-salt"         {:parent-node "sauce-1"
+   :edges {"edge-with-new-state"         {:parent-node "sauce-1"
+                                          :edge-id "edge-with-new-state"
+                                          :state :new
+                                          :uom :gram
+                                          :index 2}
+
+           "sauce-1-salt"         {:parent-node "sauce-1"
                                    :child-node "salt"
                                    :edge-id "sauce-1-salt"
-                                   :qty 10
+                                   :qty 250
                                    :uom :gram
                                    :index 1}
 
            "sauce-1-pepper"       {:parent-node "sauce-1"
                                    :child-node "pepper"
                                    :edge-id "sauce-1-pepper"
-                                   :qty 10
+                                   :qty 250
                                    :uom :gram
-                                   :index 2}
+                                   :index 3}
 
            "burrito-sauce-1"  {:parent-node "burrito"
                                :child-node "sauce-1"
                                :edge-id "burrito-sauce-1"
-                               :qty 100
+                               :qty 500
                                :uom :gram
                                :index 1}}
 
-   :conversions {"salt" {:cup    {:gram 10}
+   :conversions {"salt" {:cup    {:gram 273}
                          :case   {:pack 25}
-                         :pinch  {:gram 0.2}
+                         :pinch  {:gram 0.355625}
                          :pack   {:pound 1}}
-                 "sauce-1" {"burrito" {:gram 100}}}
+                 "sauce-1" {"burrito" {:gram 500}}}
 
    :costs {"salt"    [{:cost 2
                        :qty 1

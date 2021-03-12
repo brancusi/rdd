@@ -7,7 +7,7 @@
     :refer-macros [info]]
 
    [rdd.db :refer [default-db]]
-   [rdd.interceptors.db-interceptors :refer [re-index-edges]]
+   [rdd.interceptors.db-interceptors :refer [generate-uuid re-index-edges]]
 
    [re-frame.core :as rf]
    [nano-id.core :refer [nano-id]]))
@@ -62,15 +62,66 @@
    [:nodes from :child-edges]
    #(conj % uuid)))
 
+(defn unrelate-edge
+  [from uuid db]
+  (update-in
+   db
+   [:nodes from :child-edges]
+   #(conj % uuid)))
+
+
+(defn remove-item
+  [to-remove data]
+  (remove #(= to-remove %) data))
+
+(def test-db {:nodes {"sauce" {:id "sauce"
+                               :child-edges ["sauce-salt" "b" "c"]}
+                      "salt" {:id "salt"
+                              :parent-edges ["sauce-salt" "b" "c"]}}
+              :edges {"sauce-salt" {:edge-id "sauce-salt"
+                                    :parent-node "sauce"
+                                    :child-node "salt"}}})
+
+(defn remove-in
+  "Safely try to remove an item from a vector in a nested map.
+   If the path to the vector returns nil, it will just return the original data"
+  [path to-remove data]
+  (if (seq (get-in data path))
+    (update-in
+     data
+     path
+     (fn [data]
+       (vec (remove #(= to-remove %) data))))
+    data))
+
+(defn remove-edge-relationships
+  [db edge-id]
+  (let [edge (get-in db [:edges edge-id])
+        parent-node (get-in db [:nodes (:parent-node edge)])
+        parent-node-id (:id parent-node)
+        child-node (get-in db [:nodes (:child-node edge)])
+        child-node-id (:id child-node)]
+    (->> db
+         (remove-in [:nodes parent-node-id :child-edges] edge-id)
+         (remove-in [:nodes child-node-id :parent-edges] edge-id))))
+
 (rf/reg-event-fx
- :add-child
+ :destroy-edge
  [rf/trim-v]
- (fn [{:keys [db]} [parent-id index child-id opts]]
-   (let [edge-id (nano-id)
-         child-node (get-in db [:nodes child-id])
+ (fn [{:keys [db]} [edge-id]]
+   {:db (-> db
+            (remove-edge-relationships edge-id)
+            (update-in [:edges] dissoc edge-id))}))
+
+(rf/reg-event-fx
+ :create-edge
+ [rf/trim-v (generate-uuid :edge-id) re-index-edges]
+ (fn [{:keys [db edge-id]} [parent-id index child-id opts]]
+   (let [child-node (get-in db [:nodes child-id])
          {:keys [yield-uom]} child-node
          opts (if opts opts {})]
-     {:db (->>
+     {:edge-id edge-id
+      :db (->>
            (assoc-in db [:edges edge-id] (merge {:child-node child-id
                                                  :parent-node parent-id
                                                  :qty 1
