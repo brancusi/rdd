@@ -5,9 +5,15 @@
     :refer-macros [log info spy]]
    [cljs.pprint :refer [pprint]]
    [rdd.db :refer [default-db]]
+   [cljs-time.core    :refer [today days minus plus day-of-week before? after?]]
+   [cljs-time.coerce  :refer [to-local-date]]
+   [cljs-time.format  :refer [formatter unparse parse]]
    [rdd.utils.conversions :refer [uom->uom-factor cost-for-uom]]
    [re-frame.core :as rf :refer [subscribe reg-sub reg-sub-raw]]
    [reagent.ratom :as ra :refer [reaction]]))
+
+
+
 
 (reg-sub
  :db
@@ -62,15 +68,27 @@
  :node-costs
  (fn
    [db [_ node-id]]
-   (get-in db [:costs node-id])))
+   (->> (get-in db [:nodes node-id :costs])
+        (mapv #(get-in db [:costs %])))))
 
 (reg-sub
- :recent-node-cost
+ :sorted-node-cost
  (fn [[_ node-id]]
    [(subscribe [:node-costs node-id])])
  (fn
    [[node-costs] _]
-   (last (sort-by :date node-costs))))
+   (sort-by :date node-costs)))
+
+(reg-sub
+ :recent-node-cost
+ (fn [[_ node-id]]
+   [(subscribe [:sorted-node-cost node-id])])
+ (fn
+   [[sorted-node-costs] _]
+   (last sorted-node-costs)))
+
+
+
 
 (reg-sub
  :cost-for-uom

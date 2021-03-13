@@ -10,7 +10,6 @@
   ["Angelica"
    "Basil"
    "Holy Basil"
-   "Thai Basil"
    "Bay leaf"
    "Indian Bay leaf"
    "Boldo"
@@ -220,19 +219,27 @@
                                      :id "salt"
                                      :yield 1
                                      :yield-uom :gram
-                                     :parent-edges ["sauce-1-salt"]}
+                                     :parent-edges ["sauce-1-salt"]
+                                     :costs ["salt-cost-1"]}
+
+                     "thai-basil" {:name "Thai Basil"
+                                   :id "thai-basil"
+                                   :yield 1
+                                   :yield-uom :gram
+                                   :parent-edges ["sauce-1-thai-basil"]}
 
                      "pepper"       {:name "Pepper"
                                      :id "pepper"
                                      :yield 1
                                      :yield-uom :gram
-                                     :parent-edges ["sauce-1-pepper"]}
+                                     :parent-edges ["sauce-1-pepper"]
+                                     :costs ["pepper-cost-1"]}
 
                      "sauce-1"      {:name "Sauce 1"
                                      :id "sauce-1"
                                      :yield 500
                                      :yield-uom :gram
-                                     :child-edges ["sauce-1-salt" "edge-with-new-state" "sauce-1-pepper"]
+                                     :child-edges ["sauce-1-salt" "edge-with-new-state" "sauce-1-pepper" "sauce-1-thai-basil"]
                                      :parent-edges ["burrito-sauce-1"]}
 
                      "burrito"      {:name "Burrito"
@@ -240,8 +247,6 @@
                                      :yield 1
                                      :yield-uom "burrito"
                                      :child-edges ["burrito-sauce-1"]}})
-
-
 (def default-db
   {:selected-node "burrito"
 
@@ -249,9 +254,18 @@
 
    :edges {"edge-with-new-state"         {:parent-node "sauce-1"
                                           :edge-id "edge-with-new-state"
-                                          :state :new
+                                          :state {:type :new}
                                           :uom :gram
                                           :index 2}
+
+           "sauce-1-thai-basil"         {:parent-node "sauce-1"
+                                         :child-node "thai-basil"
+                                         :edge-id "sauce-1-thai-basil"
+                                         :qty 250
+                                         :uom :gram
+                                         :state {:type :settings
+                                                 :panel :cost}
+                                         :index 3}
 
            "sauce-1-salt"         {:parent-node "sauce-1"
                                    :child-node "salt"
@@ -265,7 +279,7 @@
                                    :edge-id "sauce-1-pepper"
                                    :qty 250
                                    :uom :gram
-                                   :index 3}
+                                   :index 4}
 
            "burrito-sauce-1"  {:parent-node "burrito"
                                :child-node "sauce-1"
@@ -280,17 +294,19 @@
                          :pack   {:pound 1}}
                  "sauce-1" {"burrito" {:gram 500}}}
 
-   :costs {"salt"    [{:cost 2
-                       :qty 1
-                       :uom :pound
-                       :date 1
-                       :additional-cost 0}]
+   :costs {"salt-cost-1"    {:id "salt-cost-1"
+                             :cost 2
+                             :qty 1
+                             :uom :pound
+                             :date 1
+                             :additional-cost 0}
 
-           "pepper"  [{:cost 2
-                       :qty 1
-                       :uom :pound
-                       :date 1
-                       :additional-cost 0}]}})
+           "pepper-cost-1"  {:id "pepper-cost-1"
+                             :cost 2
+                             :qty 1
+                             :uom :pound
+                             :date 1
+                             :additional-cost 0}}})
 
 (defn seed-db
   []

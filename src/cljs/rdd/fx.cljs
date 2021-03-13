@@ -33,12 +33,34 @@
    {:db (assoc-in db [:editing :node/id] id)}))
 
 (rf/reg-event-fx
- :add-node-cost
- (fn [{:keys [db]} [_ node-id cost]]
+ :create-cost
+ [rf/trim-v]
+ (fn [{:keys [db]} [cost-id data]]
+   (let [cost-data (merge data {:id cost-id})]
+     {:db (assoc-in
+           db
+           [:costs cost-id]
+           cost-data)})))
+
+(rf/reg-event-fx
+ :relate-cost
+ [rf/trim-v]
+ (fn [{:keys [db]} [node-id cost-id]]
    {:db (update-in
          db
-         [:costs node-id]
-         #(conj % cost))}))
+         [:nodes node-id :costs]
+         conj
+         cost-id)}))
+
+
+
+(rf/reg-event-fx
+ :create-relate-cost
+ [rf/trim-v (generate-uuid :cost-id)]
+ (fn [{:keys [db cost-id]} [node-id cost-data]]
+   {:db db
+    :fx [[:dispatch [:create-cost cost-id cost-data]]
+         [:dispatch [:relate-cost node-id cost-id]]]}))
 
 (rf/reg-event-fx
  :update-node

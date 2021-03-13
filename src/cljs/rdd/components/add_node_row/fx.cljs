@@ -36,4 +36,4 @@
  (fn [{:keys [node-id]} [search-result edge-id]]
    (let [node-data (search-result->node-data node-id search-result)]
      {:fx [[:dispatch [:create-node node-id node-data]]
-           [:dispatch [:relink-child edge-id node-id :focused]]]})))
+           [:dispatch [:relink-child edge-id node-id {:type :focused}]]]})))

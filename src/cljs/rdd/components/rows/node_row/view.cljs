@@ -5,6 +5,8 @@
    [taoensso.timbre :as timbre
     :refer-macros [info]]
    [rdd.components.add-node-row.subs]
+   [rdd.components.rows.node-row.fx]
+   [rdd.components.settings.view :refer [settings-panel]]
    [rdd.components.node-editor.subs]
    [rdd.components.node-editor.fx]
    [re-frame.core :as rf]
@@ -12,7 +14,7 @@
    [herb.core :refer [<class]]
    [rdd.components.yield-editor.view :refer [yield-editor]]
    [rdd.components.quantity-editor.view :refer [quantity-editor]]
-   [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box gap]]))
+   [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box gap md-icon-button]]))
 
 (defn row-style []
   {:padding-left "2rem"})
@@ -38,9 +40,9 @@
 
     {:scale/keys [local-qty]} :tree}]
 
-  (let [create-edge #(rf/dispatch [:create-edge %1 %2 nil {:state :new}])
+  (let [create-edge #(rf/dispatch [:create-edge %1 %2 nil {:state {:type :new}}])
         destroy-edge #(rf/dispatch [:destroy-edge %1])
-        is-new? (= state :new)]
+        is-new? (= (:type state) :new)]
 
     [v-box
      :class "border-2 my-1 py-2"
@@ -85,6 +87,14 @@
 
                             [box
                              :class "mr-4"
+                             :child [md-icon-button
+                                     :md-icon-name "zmdi-settings"
+                                     :tooltip      "Show settings"
+                                     :size         :smaller
+                                     :on-click #(rf/dispatch [:toggle-node-settings edge-id])]]
+
+                            [box
+                             :class "mr-4"
                              :child [button
                                      :label "X"
                                      :on-click #(destroy-edge edge-id)]]
@@ -92,7 +102,11 @@
                             ;; 
                             ]]
 
-
+                ;; Display any custom panels based on state
+                (case (:type state)
+                  :settings [settings-panel id edge-id]
+                  :other [:p "I'm a dope ass other"]
+                  nil)
 
                 (if-let [children children]
                   [v-box

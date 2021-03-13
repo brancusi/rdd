@@ -12,6 +12,5 @@
      [:p "Main nav bar"]
      [:div (for [item nav-items]
              ^{:key (:id item)} [:a {:on-click (fn []
-                                                 (info "href" (:href item))
                                                  (rtfe/push-state (:href item)))} (:name item)])]]))
 

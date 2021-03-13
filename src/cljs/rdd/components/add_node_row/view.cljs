@@ -38,7 +38,7 @@
         process-on-change (fn [{:keys [type] :as result}]
                             (case type
                               :constructor (rf/dispatch [:create-and-link-node-from-search-result result edge-id])
-                              :add (rf/dispatch [:relink-child edge-id (:id result) :focused])))]
+                              :add (rf/dispatch [:relink-child edge-id (:id result) {:type :focused}])))]
 
     ;; [edn->hiccup tree]
 
