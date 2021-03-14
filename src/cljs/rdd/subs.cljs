@@ -87,12 +87,17 @@
    [[sorted-node-costs] _]
    (last sorted-node-costs)))
 
-
-
+(reg-sub
+ :weight-for-uom
+ (fn [[_ node-id _ _ _]]
+   [(subscribe [:conversion node-id])])
+ (fn
+   [[conversion] [_ _ from-uom to-uom quantity]]
+   (uom->uom-factor conversion quantity from-uom to-uom)))
 
 (reg-sub
  :cost-for-uom
- (fn [[_ node-id]]
+ (fn [[_ node-id _]]
    [(subscribe [:recent-node-cost node-id])
     (subscribe [:conversion node-id])])
  (fn

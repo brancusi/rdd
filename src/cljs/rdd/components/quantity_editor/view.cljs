@@ -27,7 +27,7 @@
                               :src (at)
                               :model (str qty)
                               :width "100px"
-                              :on-change (fn [val]
+                              :on-change (fn [val _]
                                            (dispatch [:update-edge edge-id {:qty val}]))]]
                             [single-dropdown
                              :src (at)

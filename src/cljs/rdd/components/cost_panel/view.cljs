@@ -4,7 +4,7 @@
     :refer-macros [log info spy]]
    [reagent.core  :as reagent]
    [goog.string :as gstring]
-   [goog.string.format]
+
    [rdd.components.add-node-row.subs]
    [rdd.components.node-editor.subs]
    [rdd.components.yield-editor.view :refer [yield-editor]]

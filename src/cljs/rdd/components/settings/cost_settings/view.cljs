@@ -17,10 +17,12 @@
                                                                 :qty 1
                                                                 :uom :pound
                                                                 :additional-cost 0}]))]
-    [:div
-     [:div (for [cost node-costs]
-             ^{:key (:id cost)} [cost-row cost])]
+    [v-box
+     :children [[v-box :children (for [cost node-costs]
+                                   ^{:key (:id cost)} [cost-row cost])]
 
-     [button
-      :label "+"
-      :on-click create-new-cost]]))
+                [box
+                 :class "mt-4"
+                 :child [button
+                         :label "Create new cost +"
+                         :on-click create-new-cost]]]]))

@@ -225,8 +225,7 @@
                      "thai-basil" {:name "Thai Basil"
                                    :id "thai-basil"
                                    :yield 1
-                                   :yield-uom :gram
-                                   :parent-edges ["sauce-1-thai-basil"]}
+                                   :yield-uom :gram}
 
                      "pepper"       {:name "Pepper"
                                      :id "pepper"
@@ -237,9 +236,9 @@
 
                      "sauce-1"      {:name "Sauce 1"
                                      :id "sauce-1"
-                                     :yield 500
+                                     :yield 1
                                      :yield-uom :gram
-                                     :child-edges ["sauce-1-salt" "edge-with-new-state" "sauce-1-pepper" "sauce-1-thai-basil"]
+                                     :child-edges ["sauce-1-salt" "sauce-1-pepper"]
                                      :parent-edges ["burrito-sauce-1"]}
 
                      "burrito"      {:name "Burrito"
@@ -252,39 +251,24 @@
 
    :nodes (merge (names->nodes (take 10 spice-names)) internal-nodes)
 
-   :edges {"edge-with-new-state"         {:parent-node "sauce-1"
-                                          :edge-id "edge-with-new-state"
-                                          :state {:type :new}
-                                          :uom :gram
-                                          :index 2}
-
-           "sauce-1-thai-basil"         {:parent-node "sauce-1"
-                                         :child-node "thai-basil"
-                                         :edge-id "sauce-1-thai-basil"
-                                         :qty 250
-                                         :uom :gram
-                                         :state {:type :settings
-                                                 :panel :cost}
-                                         :index 3}
-
-           "sauce-1-salt"         {:parent-node "sauce-1"
+   :edges {"sauce-1-salt"         {:parent-node "sauce-1"
                                    :child-node "salt"
                                    :edge-id "sauce-1-salt"
-                                   :qty 250
+                                   :qty 1
                                    :uom :gram
                                    :index 1}
 
            "sauce-1-pepper"       {:parent-node "sauce-1"
                                    :child-node "pepper"
                                    :edge-id "sauce-1-pepper"
-                                   :qty 250
+                                   :qty 1
                                    :uom :gram
                                    :index 4}
 
            "burrito-sauce-1"  {:parent-node "burrito"
                                :child-node "sauce-1"
                                :edge-id "burrito-sauce-1"
-                               :qty 500
+                               :qty 1
                                :uom :gram
                                :index 1}}
 
@@ -292,19 +276,20 @@
                          :case   {:pack 25}
                          :pinch  {:gram 0.355625}
                          :pack   {:pound 1}}
-                 "sauce-1" {"burrito" {:gram 500}}}
+                ;;  "sauce-1" {"burrito" {:gram 1}}
+                 }
 
    :costs {"salt-cost-1"    {:id "salt-cost-1"
-                             :cost 2
+                             :cost 1
                              :qty 1
-                             :uom :pound
+                             :uom :gram
                              :date 1
                              :additional-cost 0}
 
            "pepper-cost-1"  {:id "pepper-cost-1"
-                             :cost 2
+                             :cost 1
                              :qty 1
-                             :uom :pound
+                             :uom :gram
                              :date 1
                              :additional-cost 0}}})
 

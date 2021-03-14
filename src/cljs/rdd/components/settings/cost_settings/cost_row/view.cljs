@@ -26,6 +26,7 @@
     [h-box
      :src (at)
      :align :center
+     :class "mt-2"
      :children [[input-text
                  :src (at)
                  :width "50px"

@@ -9,111 +9,127 @@
    [rdd.components.settings.view :refer [settings-panel]]
    [rdd.components.node-editor.subs]
    [rdd.components.node-editor.fx]
+   [reagent.core :as r]
    [re-frame.core :as rf]
    [rdd.components.add-node-row.view :refer [add-node-editor]]
    [herb.core :refer [<class]]
    [rdd.components.yield-editor.view :refer [yield-editor]]
    [rdd.components.quantity-editor.view :refer [quantity-editor]]
-   [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box gap md-icon-button]]))
+   [re-com.core   :refer [input-text button single-dropdown at row-button v-box h-box label box gap md-icon-button]]))
 
 (defn row-style []
   {:padding-left "2rem"})
 
 (defn node-row
-
   "Build a node row. Expects a node-tree and if this the top level node"
-
-  [{:keys [tree
-           parent-node-id]
-    {:keys [id
-            name
-            state
-            qty
-            children
-            uom
-            index
-            edge-id
-            recipe-cost
-            cost-per-uom]} :tree
-
-    {:cost/keys [missing-cost?]} :tree
-
-    {:scale/keys [local-qty]} :tree}]
-
-  (let [create-edge #(rf/dispatch [:create-edge %1 %2 nil {:state {:type :new}}])
+  [_]
+  (let [local-state (r/atom {:settings-open? false
+                             :open? true
+                             :panel :default})
+        mouse-over (r/atom false)
+        create-edge #(rf/dispatch [:create-edge %1 %2 nil {:state {:type :new}}])
         destroy-edge #(rf/dispatch [:destroy-edge %1])
-        is-new? (= (:type state) :new)]
-
-    [v-box
-     :class "border-2 my-1 py-2"
-     :children [[h-box
-                 :align :center
-                 :children [(if is-new?
-                              [add-node-editor {:edge-id edge-id
-                                                :tree tree}]
-
-                              [box
-                               :size "150px"
-                               :child [label
-                                       :class "cursor-pointer"
-                                       :label (str name " - " index)]])
-
-                            (quantity-editor tree)
-
-                            (when missing-cost?
-                              [box
-                               :class "ml-8"
-                               :child [label
-                                       :label (str "Cost missing")]])
-
-                            [box
-                             :class "ml-8"
-                             :child [label
-                                     :label (str "M-QTY: " qty " - " "L-QTY: " local-qty)]]
+        update-local-state #(swap! local-state merge %)
+        toggle-open #(update-local-state {:open? (not (:open? @local-state))})
+        toggle-settings-panel #(update-local-state {:settings-open? (not (:settings-open? @local-state))})]
 
 
-                            [box
-                             :class "ml-8"
-                             :child [button
-                                     :label "+"
-                                     :on-click #(create-edge parent-node-id index)]]
+    (fn [{:keys [tree
+                 parent-node-id]
+          {:keys [id
+                  name
+                  state
+                  children
+                  index
+                  edge-id]} :tree
 
-                            [box
-                             :class "ml-8"
-                             :child [label
-                                     :label (str "RC: " recipe-cost " - " "UOM-C: " cost-per-uom)]]
+          {:cost/keys [missing-cost?]} :tree}]
+      (let [is-new? (= (:type state) :new)
+            has-children? (some? (seq children))]
+        [v-box
+         :children [[h-box
+                     :class    "rc-div-table-row"
+                     :attr {:on-mouse-over #(reset! mouse-over true)
+                            :on-mouse-out #(reset! mouse-over false)}
+                     :align :center
+                     :children [(if is-new?
+                                  [add-node-editor {:edge-id edge-id
+                                                    :tree tree}]
 
-                            [gap :size "1"]
+                                  [h-box
+                                   :class "mr-4"
+                                   :width "150px"
+                                   :children [(when has-children?
+                                                [box
+                                                 :class "mr-4"
+                                                 :align :center
+                                                 :child [md-icon-button
+                                                         :md-icon-name (if (:open? @local-state) "zmdi-chevron-down" "zmdi-chevron-right")
+                                                         :size         :smaller
+                                                         :on-click toggle-open]])
 
-                            [box
-                             :class "mr-4"
-                             :child [md-icon-button
-                                     :md-icon-name "zmdi-settings"
-                                     :tooltip      "Show settings"
-                                     :size         :smaller
-                                     :on-click #(rf/dispatch [:toggle-node-settings edge-id])]]
 
-                            [box
-                             :class "mr-4"
-                             :child [button
-                                     :label "X"
-                                     :on-click #(destroy-edge edge-id)]]
+                                              [box
+                                               :size "150px"
+                                               :child [label
+                                                       :class "cursor-pointer"
+                                                       :label (str name " - " index)]]]])
 
-                            ;; 
-                            ]]
+                                (quantity-editor tree)
 
-                ;; Display any custom panels based on state
-                (case (:type state)
-                  :settings [settings-panel id edge-id]
-                  :other [:p "I'm a dope ass other"]
-                  nil)
+                                (when missing-cost?
+                                  [box
+                                   :class "ml-8"
+                                   :child [label
+                                           :label (str "Cost missing")]])
 
-                (if-let [children children]
-                  [v-box
-                   :class (<class row-style)
-                   :children [(for [child (sort-by :index children)]
-                                (let [{:keys [edge-id]} child]
-                                  ^{:key edge-id} [node-row
-                                                   {:tree child
-                                                    :parent-node-id id}
-                                                   child]))]])]]))
+                                [gap :size "1"]
+
+                                [box
+                                 :class "mr-4"
+                                 :child [row-button
+                                         :md-icon-name "zmdi-long-arrow-down"
+                                         :mouse-over-row? @mouse-over
+                                         :tooltip      "Add below"
+
+                                         :on-click #(create-edge parent-node-id index)]]
+
+                                [box
+                                 :class "mr-16"
+                                 :child [row-button
+                                         :md-icon-name "zmdi-long-arrow-return"
+                                         :mouse-over-row? @mouse-over
+                                         :tooltip      "Add inside"
+
+                                         :on-click #(create-edge id 1)]]
+
+                                [box
+                                 :class "mr-4"
+                                 :child [row-button
+                                         :md-icon-name "zmdi-settings"
+                                         :mouse-over-row? @mouse-over
+                                         :tooltip      "Show settings"
+
+                                         :on-click toggle-settings-panel]]
+
+                                [box
+                                 :class "mr-4"
+                                 :child [row-button
+                                         :md-icon-name "zmdi-delete"
+                                         :mouse-over-row? @mouse-over
+                                         :tooltip      "Delete row"
+                                         :on-click #(destroy-edge edge-id)]]]]
+
+                    (when (:settings-open? @local-state)
+
+                      [settings-panel @local-state update-local-state id edge-id])
+
+                    (when (:open? @local-state)
+                      (when has-children?
+                        [v-box
+                         :class (<class row-style)
+                         :children [(for [child (sort-by :index children)]
+                                      (let [{:keys [edge-id]} child]
+                                        ^{:key edge-id} [node-row
+                                                         {:tree child
+                                                          :parent-node-id id}]))]]))]]))))

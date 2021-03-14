@@ -74,10 +74,11 @@
                                 (assoc :factor qty :last-key next-hop)))))
                       {:last-key nil :factor 1}
                       path)]
-          factor)
+          (js/parseFloat factor))
 
       ;; No path found
         (str "No solution found for " qty from " to " to)))))
+
 
 
 (defn cost-for-uom

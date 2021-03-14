@@ -20,49 +20,21 @@
    [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box]]))
 
 (defn node-editor
-  [tree]
-  (let [active-master-node @(subscribe [:active-master-node])
+  [{:keys [id name children] :as tree}]
 
-        {:keys [id
-                yield
-                edge-id
-                name
-                qty
-                children
-                recipe-cost
-                cost-per-uom
-                yield-uom
-                uom]} tree]
-    [:div
-     [:h1 {:class "my-8 text-4xl"} name]
+  [v-box
+   :children [[:h1 {:class "my-8 text-4xl"} name]
 
+              [h-box
+               :align :center
+               :children [[label
+                           :class "mr-4"
+                           :label "This recipe makes"]
+                          (yield-editor tree)]]
 
-    ;;  [edn->hiccup tree]
+              (cost-panel tree)
 
-     #_[h-box
-        :class "my-8"
-        :children [[button
-                    :label "Edit sauce"
-                    :on-click (fn []
-                                (rf/dispatch [:set-active-master-node "sauce-1"]))]
-                   [button
-                    :label "Edit burrito"
-                    :on-click (fn []
-                                (rf/dispatch [:set-active-master-node "burrito"]))]]]
-
-     [h-box
-      :align :center
-      :children [[label
-                  :class "mr-4"
-                  :label "This recipe makes"]
-                 (yield-editor tree)]]
-
-
-     (cost-panel tree)
-
-
-     (for [node (:children tree)]
-       (do
-         ^{:key (:id node)} [node-row
-                             {:tree node
-                              :parent-node-id id}]))]))
+              (for [{:keys [edge-id] :as node} children]
+                ^{:key edge-id} [node-row
+                                 {:tree node
+                                  :parent-node-id id}])]])

@@ -2,6 +2,7 @@
   (:require
    [re-frame.core :as rf]
    [rdd.components.viewers.ednviewer :refer [edn->hiccup]]
+   [rdd.components.yield-editor.view :refer [yield-editor]]
    [cljs.pprint :refer [pprint]]
    [rdd.components.settings.cost-settings.view :refer [cost-settings]]
    [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box gap]]
@@ -10,8 +11,30 @@
 
 
 (defn settings-panel
-  [node-id edge-id]
+  [{:keys [panel]} update-state node-id edge-id]
   (let [node @(rf/subscribe [:node node-id])
-        edge @(rf/subscribe [:edge edge-id])]
-    (when true
-      [cost-settings node edge])))
+        edge @(rf/subscribe [:edge edge-id])
+        tree @(rf/subscribe [:node->tree node-id])
+        has-children? (some? (seq (:child-edges node)))]
+
+    [v-box
+     :class "bg-gray-200 p-4"
+     :children [[h-box
+                 :class "mb-4"
+                 :children [[button
+                             :label "Costs"
+                             :on-click #(update-state {:panel :costs})]
+
+                            [button
+                             :label "Yield"
+                             :on-click #(update-state {:panel :yield})]
+
+                ;; 
+                            ]]
+
+                (case panel
+                  :costs [cost-settings node edge]
+                  :yield [yield-editor tree]
+                  :default (if has-children?
+                             [yield-editor tree]
+                             [cost-settings node edge]))]]))
