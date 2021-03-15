@@ -11,5 +11,4 @@
  :update-cost
  [rf/trim-v]
  (fn [db [cost-id merge-data]]
-   (info cost-id merge-data)
    (update-in db [:costs cost-id] merge merge-data)))

@@ -220,7 +220,8 @@
                                      :yield 1
                                      :yield-uom :gram
                                      :parent-edges ["sauce-1-salt"]
-                                     :costs ["salt-cost-1"]}
+                                     :costs ["salt-cost-1"]
+                                     :conversions ["salt-cup"]}
 
                      "thai-basil" {:name "Thai Basil"
                                    :id "thai-basil"
@@ -272,12 +273,17 @@
                                :uom :gram
                                :index 1}}
 
-   :conversions {"salt" {:cup    {:gram 273}
-                         :case   {:pack 25}
-                         :pinch  {:gram 0.355625}
-                         :pack   {:pound 1}}
-                ;;  "sauce-1" {"burrito" {:gram 1}}
-                 }
+   :conversions
+
+   {"salt-cup" {:id "salt-cup"
+                :from :cup
+                :to :gram
+                :factor 273}}
+
+   #_{"salt" {:cup    {:gram 273}
+              :case   {:pack 25}
+              :pinch  {:gram 0.355625}
+              :pack   {:pound 1}}}
 
    :costs {"salt-cost-1"    {:id "salt-cost-1"
                              :cost 1

@@ -23,9 +23,9 @@
 (defn node-row
   "Build a node row. Expects a node-tree and if this the top level node"
   [_]
-  (let [local-state (r/atom {:settings-open? false
+  (let [local-state (r/atom {:settings-open? true
                              :open? true
-                             :panel :default})
+                             :panel :conversions})
         mouse-over (r/atom false)
         create-edge #(rf/dispatch [:create-edge %1 %2 nil {:state {:type :new}}])
         destroy-edge #(rf/dispatch [:destroy-edge %1])

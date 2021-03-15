@@ -33,6 +33,17 @@
    {:db (assoc-in db [:editing :node/id] id)}))
 
 (rf/reg-event-fx
+ :update-conversion
+ [rf/trim-v]
+ (fn [{:keys [db]} [id data]]
+   (let [merged-data (merge data)]
+     {:db (update-in
+           db
+           [:conversions id]
+           merge
+           merged-data)})))
+
+(rf/reg-event-fx
  :create-cost
  [rf/trim-v]
  (fn [{:keys [db]} [cost-id data]]
@@ -51,8 +62,6 @@
          [:nodes node-id :costs]
          conj
          cost-id)}))
-
-
 
 (rf/reg-event-fx
  :create-relate-cost

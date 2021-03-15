@@ -34,17 +34,19 @@
    (:uoms db)))
 
 (reg-sub
- :all-conversions
+ :conversions
  (fn
    [db _]
    (:conversions db)))
 
 (reg-sub
- :conversion
- :<- [:all-conversions]
+ :node-conversions
+ (fn [[_ node-id]]
+   [(subscribe [:conversions])
+    (subscribe [:node node-id])])
  (fn
-   [conversions [_ id]]
-   (get-in conversions [id])))
+   [[all-conversions {:keys [conversions]}] _]
+   (vec (keep all-conversions conversions))))
 
 (reg-sub
  :nodes
@@ -90,27 +92,27 @@
 (reg-sub
  :weight-for-uom
  (fn [[_ node-id _ _ _]]
-   [(subscribe [:conversion node-id])])
+   [(subscribe [:node-conversions node-id])])
  (fn
-   [[conversion] [_ _ from-uom to-uom quantity]]
-   (uom->uom-factor conversion quantity from-uom to-uom)))
+   [[conversions] [_ _ from-uom to-uom quantity]]
+   (uom->uom-factor conversions quantity from-uom to-uom)))
 
 (reg-sub
  :cost-for-uom
  (fn [[_ node-id _]]
    [(subscribe [:recent-node-cost node-id])
-    (subscribe [:conversion node-id])])
+    (subscribe [:node-conversions node-id])])
  (fn
-   [[cost conversion] [_ _ uom]]
-   (cost-for-uom cost conversion uom)))
+   [[cost conversions] [_ _ uom]]
+   (cost-for-uom cost conversions uom)))
 
 (reg-sub
  :from-uom->uom
  (fn [[_ node-id]]
-   [(subscribe [:conversion node-id])])
+   [(subscribe [:node-conversions node-id])])
  (fn
-   [[conversion] [_ _ from-uom to-uom]]
-   (uom->uom-factor conversion 1 from-uom to-uom)))
+   [[conversions] [_ _ from-uom to-uom]]
+   (uom->uom-factor conversions 1 from-uom to-uom)))
 
 (reg-sub
  :child-node
