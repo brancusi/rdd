@@ -8,23 +8,6 @@
             [taoensso.timbre :as timbre
              :refer-macros [info]]))
 
-;; TODO: First need to build the 
-;; intermediate map that has the lookup structure you defined. 
-;; 
-;; It might be worth playing the the graph DB and seeing 
-;; what types of structure it needs to complete the lookup
-;; and just build that directly from the UOMS map. 
-;; 
-;; Once you do that, there needs to be two maps, 
-;; standard-conversions, custom-conversions. 
-;; These two should have the same shape and keys so
-;; that they can be easily merged. 
-;; 
-;; Once merged, they can be prepped for the graph lookup.
-;; 
-;; UOMS should simply be derived from the merged output 
-;; of standard-conversions, custom-conversions
-
 (def uoms {:gram {:system :metric
                   :type :weight
                   :id :gram
@@ -112,42 +95,7 @@
                 :group (str/capitalize (name type))}))
        (sort-by :group)))
 
-(uoms->grouped-by-type uoms)
-
-(def standard-uoms
-  {:gram {:kilogram 0.001
-          :pound 0.002204624
-          :ounce 0.035273991}
-   :tsp {:gallon 0.00130208
-         :cup 0.0208333
-         :tbsp 0.333333
-         :floz 0.166667}})
-
 (defn generate-reverse-lookups
-  "Takes a conversion and generates all reverse lookups. 
-   Returns the ammended map.
-
-   {:pack {:gram 453}} -> {:pack {:gram 453} :gram {:pack 1}}
-   
-   Example:
-   ```clojure
-   (generate-reverse-lookups (get-in default-db [:conversions \" salt \"]))
-   ```
-   "
-  [conversions]
-  (reduce
-   (fn
-     [acc [from-uom val]]
-     (reduce
-      (fn
-        [acc [to-uom qty]]
-        (assoc-in acc [to-uom from-uom] (/ 1 qty)))
-      acc
-      val))
-   conversions
-   conversions))
-
-(defn generate-reverse-lookups-v2
   "Takes a conversion and generates all reverse lookups. 
    Returns the ammended map.
 
@@ -167,16 +115,7 @@
    {}
    col))
 
-#_(generate-reverse-lookups-v2 (merge uoms {:pinch {:id :pinch
-                                                    :from :pinch
-                                                    :to :gram
-                                                    :factor 3}}))
-
-#_(defn uom->uom-factor
-    [_ _ _ _]
-    1)
-
-(defn yoson
+(defn merge-conversions
   [conversions]
   (reduce (fn [acc conversion] (merge acc conversion)) uoms conversions))
 
@@ -186,16 +125,10 @@
    (uom->uom-factor salt-conversions 20 :gram :pack)
    "
   [conversions qty from to]
-
-
-
-  ;; (info uoms conversions)
-  ;; (info (merge uoms conversions))
-
   (if (= from to)
     qty
-    (let [merged (yoson conversions)
-          reverse-lookup-index (generate-reverse-lookups-v2 merged)
+    (let [merged (merge-conversions conversions)
+          reverse-lookup-index (generate-reverse-lookups merged)
           g (graph reverse-lookup-index)
           path (into [] (bf-path g from to))]
 
@@ -222,6 +155,7 @@
 
       ;; No path found
         (str "No solution found for " qty from " to " to)))))
+
 (defn cost-for-uom
   "The cost for a given UOM
    
@@ -244,7 +178,7 @@
 
 
   (def merged-conversions
-    (yoson
+    (merge-conversions
      [{"salt-cup" (get-in default-db [:conversions "salt-cup"])}]))
 
 
@@ -288,7 +222,7 @@
     ;;     :tsp {:factor 1, :from :tsp, :id :tsp, :label "Teaspoon", :system :imperial, :to :tsp, :type :volume}}
 
 
-  (def son (generate-reverse-lookups-v2 merged-conversions))
+  (def son (generate-reverse-lookups merged-conversions))
 
   son
   ;; => {:cup {:gram 0.003663003663003663, :tsp 0.02083330000005333},
@@ -337,12 +271,9 @@
   (get-in default-db [:conversions "sauce-1"])
   ;; => {"burrito" {:gram 100}}
 
-  (uom->uom-factor [{"salt-cup" (get-in default-db [:conversions "salt-cup"])}] 1 :kilo :gram)
+  (uom->uom-factor [{"salt-cup" (get-in default-db [:conversions "salt-cup"])}] 1 :cup :cup)
 
   (uom->uom-factor (get-in default-db [:conversions "sauce-1"]) 1 "burrito" :gram)
-
-  (-> merged-conversions
-      generate-reverse-lookups)
 
   (nodes supson)
 
@@ -365,7 +296,3 @@
             (vec [x y z])))
   ;; 
   )
-;; => ([0 0 0] [0 0 1] [0 0 2] [0 0 3] [0 0 4])
-
-;; => ([0 0 0] [0 0 1] [0 0 2] [0 0 3] [0 0 4])
-
