@@ -24,10 +24,11 @@
 
 (defn conversion-editor
   [{:keys [id edge-id] :as tree}]
-  (let [a (reagent/atom "")
+  (let [update-conversion (fn [conversion-id opts] (rf/dispatch [:update-conversion conversion-id opts]))
 
-        update-conversion (fn [conversion-id opts] (rf/dispatch [:update-conversion conversion-id opts]))
-
+        ;; TODO: This should be converted to a RF subscription
+        ;; The sub should do all the conversions to get clean UOMs.
+        ;; This is going to be key for when we create custom UOMs.
         choices (->> (uoms->grouped-by-type conversions/uoms)
                      (mapv #(assoc % :type :select)))
                 ;; => [{:group "Volume", :id :floz, :label "Fluid Ounce", :type :select}

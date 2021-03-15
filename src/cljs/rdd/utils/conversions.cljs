@@ -8,6 +8,7 @@
             [taoensso.timbre :as timbre
              :refer-macros [info]]))
 
+;; TODO: Rename to conversions, this is not to be used directly for uoms
 (def uoms {:gram {:system :metric
                   :type :weight
                   :id :gram
