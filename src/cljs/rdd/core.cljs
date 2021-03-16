@@ -27,7 +27,7 @@
 
   ;; Restart DB on each save. Disable if you want to retain state
   ;; across saves
-  (rf/dispatch-sync [::events/initialize-db])
+  ;; (rf/dispatch-sync [::events/initialize-db])
 
   (rf/clear-subscription-cache!)
   (styles/inject-trace-styles js/document)

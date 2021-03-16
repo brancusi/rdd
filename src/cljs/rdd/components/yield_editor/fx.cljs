@@ -1,4 +1,4 @@
-(ns rdd.components.settings.cost-settings.fx
+(ns rdd.components.yield-editor.fx
   (:require
    [re-frame.core :as rf]
    [rdd.components.viewers.ednviewer :refer [edn->hiccup]]
@@ -8,17 +8,11 @@
    [taoensso.timbre :as timbre :refer-macros [log info spy]]
    [cljs.pprint :refer [pprint]]))
 
-(rf/reg-event-db
- :update-cost
- [rf/trim-v]
- (fn [db [cost-id merge-data]]
-   (update-in db [:costs cost-id] merge merge-data)))
-
 
 (rf/reg-event-fx
- :create-and-link-uom-cost
+ :create-and-link-uom-node
  [rf/trim-v (generate-uuid :uom-id)]
- (fn [{:keys [db uom-id]} [cost-id uom-label]]
+ (fn [{:keys [db uom-id]} [node-id uom-label]]
    {:db db
     :fx [[:dispatch [:create-uom uom-id uom-label]]
-         [:dispatch [:update-cost cost-id {:uom uom-id}]]]}))
+         [:dispatch [:update-node node-id {:yield-uom uom-id}]]]}))

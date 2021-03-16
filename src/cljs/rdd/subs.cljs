@@ -8,12 +8,9 @@
    [cljs-time.core    :refer [today days minus plus day-of-week before? after?]]
    [cljs-time.coerce  :refer [to-local-date]]
    [cljs-time.format  :refer [formatter unparse parse]]
-   [rdd.utils.conversions :refer [uom->uom-factor cost-for-uom]]
+   [rdd.utils.conversions :refer [uom->uom-factor cost-for-uom uoms->grouped-by-type]]
    [re-frame.core :as rf :refer [subscribe reg-sub reg-sub-raw]]
    [reagent.ratom :as ra :refer [reaction]]))
-
-
-
 
 (reg-sub
  :db
@@ -28,10 +25,27 @@
    (:costs db)))
 
 (reg-sub
- :uoms
+ :standard-uoms
  (fn
    [db _]
-   (:uoms db)))
+   (:standard-uoms db)))
+
+(reg-sub
+ :custom-uoms
+ (fn
+   [db _]
+   (:custom-uoms db)))
+
+(reg-sub
+ :all-uoms
+ (fn [_]
+   [(subscribe [:custom-uoms])
+    (subscribe [:standard-uoms])])
+ (fn
+   [[custom-uoms standard-uoms]]
+   (info "All uoms rerun")
+   (->> (uoms->grouped-by-type (merge custom-uoms standard-uoms))
+        (mapv #(assoc % :type :select)))))
 
 (reg-sub
  :conversions
@@ -94,7 +108,9 @@
  (fn [[_ node-id _ _ _]]
    [(subscribe [:node-conversions node-id])])
  (fn
-   [[conversions] [_ _ from-uom to-uom quantity]]
+   [[conversions] [_ node-id from-uom to-uom quantity]]
+
+   (info node-id conversions)
    (uom->uom-factor conversions quantity from-uom to-uom)))
 
 (reg-sub
@@ -111,7 +127,8 @@
  (fn [[_ node-id]]
    [(subscribe [:node-conversions node-id])])
  (fn
-   [[conversions] [_ _ from-uom to-uom]]
+   [[conversions] [_ node-id from-uom to-uom]]
+   (info node-id conversions)
    (uom->uom-factor conversions 1 from-uom to-uom)))
 
 (reg-sub

@@ -42,7 +42,9 @@
    :id :generate-uuid
    :before (fn
              [context]
-             (rf/assoc-coeffect context key (nano-id)))))
+             (let [current-val (rf/get-coeffect context key)]
+               (when (nil? current-val)
+                 (rf/assoc-coeffect context key (nano-id)))))))
 
 (def re-index-edges
   "Interceptor to re-index the edges in order based on adding of new edges.

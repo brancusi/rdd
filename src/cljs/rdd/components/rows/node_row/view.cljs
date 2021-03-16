@@ -73,7 +73,7 @@
                                                :size "150px"
                                                :child [label
                                                        :class "cursor-pointer"
-                                                       :label (str name " - " index)]]]])
+                                                       :label name]]]])
 
                                 (quantity-editor tree)
 

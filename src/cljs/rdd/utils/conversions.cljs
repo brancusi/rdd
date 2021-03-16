@@ -7,79 +7,106 @@
             [loom.alg :refer [bf-path]]
             [taoensso.timbre :as timbre
              :refer-macros [info]]))
+(def standard-conversions {"gram" {:system :metric
+                                   :type :weight
+                                   :id "gram"
+                                   :from "gram"
+                                   :to "gram"
+                                   :label "Gram"
+                                   :factor 1}
 
-;; TODO: Rename to conversions, this is not to be used directly for uoms
-(def uoms {:gram {:system :metric
-                  :type :weight
-                  :id :gram
-                  :from :gram
-                  :to :gram
-                  :label "Gram"
-                  :factor 1}
+                           "pound" {:system :imperial
+                                    :type :weight
+                                    :id "pound"
+                                    :from "pound"
+                                    :to "gram"
+                                    :label "Pound"
+                                    :factor 453.5920865}
 
-           :pound {:system :imperial
-                   :type :weight
-                   :id :pound
-                   :from :pound
-                   :to :gram
-                   :label "Pound"
-                   :factor 453.5920865}
+                           "ounce" {:system :imperial
+                                    :type :weight
+                                    :id "ounce"
+                                    :from "ounce"
+                                    :to "gram"
+                                    :label "Ounce"
+                                    :factor 28.34949978}
 
-           :ounce {:system :imperial
-                   :type :weight
-                   :id :ounce
-                   :from :ounce
-                   :to :gram
-                   :label "Ounce"
-                   :factor 28.34949978}
+                           "kilogram" {:system :metric
+                                       :type :weight
+                                       :id "kilogram"
+                                       :from "kilogram"
+                                       :to "gram"
+                                       :label "Kilogram"
+                                       :factor 1000}
 
-           :kilogram {:system :metric
-                      :type :weight
-                      :id :kilo
-                      :from :kilo
-                      :to :gram
-                      :label "Kilogram"
-                      :factor 1000}
+                           "tsp" {:system :imperial
+                                  :type :volume
+                                  :id "tsp"
+                                  :from "tsp"
+                                  :to "tsp"
+                                  :label "Teaspoon"
+                                  :factor 1}
 
-           :tsp {:system :imperial
-                 :type :volume
-                 :id :tsp
-                 :from :tsp
-                 :to :tsp
-                 :label "Teaspoon"
-                 :factor 1}
+                           "gallon" {:system :imperial
+                                     :type :volume
+                                     :id "gallon"
+                                     :from "gallon"
+                                     :to "tsp"
+                                     :label "Gallon"
+                                     :factor 768.0019661}
 
-           :gallon {:system :imperial
-                    :type :volume
-                    :id :gallon
-                    :from :gallon
-                    :to :tsp
-                    :label "Gallon"
-                    :factor 768.0019661}
+                           "cup" {:system :imperial
+                                  :type :volume
+                                  :id "cup"
+                                  :from "cup"
+                                  :to "tsp"
+                                  :label "Cup"
+                                  :factor 48.0000768}
 
-           :cup {:system :imperial
-                 :type :volume
-                 :id :cup
-                 :from :cup
-                 :to :tsp
-                 :label "Cup"
-                 :factor 48.0000768}
+                           "tbsp" {:system :imperial
+                                   :type :volume
+                                   :id "tbsp"
+                                   :from "tbsp"
+                                   :to "tsp"
+                                   :label "Tablespoon"
+                                   :factor 3.000003}
 
-           :tbsp {:system :imperial
-                  :type :volume
-                  :id :tbsp
-                  :from :tbsp
-                  :to :tsp
-                  :label "Tablespoon"
-                  :factor 3.000003}
+                           "floz" {:system :imperial
+                                   :type :volume
+                                   :id "floz"
+                                   :from "floz"
+                                   :to "tsp"
+                                   :label "Fluid Ounce"
+                                   :factor 5.999988}})
 
-           :floz {:system :imperial
-                  :type :volume
-                  :id :floz
-                  :from :floz
-                  :to :tsp
-                  :label "Fluid Ounce"
-                  :factor 5.999988}})
+#_(reduce (fn [acc [id {:keys [type label system]}]]
+            (info id type label system)
+            (assoc
+             acc
+             (name id)
+             {:id (name id) :type type :label label :system system}))
+          {}
+          standard-conversions)
+  ;; => {"cup" {:id "cup", :label "Cup", :system :imperial, :type :volume},
+  ;;     "floz" {:id "floz", :label "Fluid Ounce", :system :imperial, :type :volume},
+  ;;     "gallon" {:id "gallon", :label "Gallon", :system :imperial, :type :volume},
+  ;;     "gram" {:id "gram", :label "Gram", :system :metric, :type :weight},
+  ;;     "kilogram" {:id "kilogram", :label "Kilogram", :system :metric, :type :weight},
+  ;;     "ounce" {:id "ounce", :label "Ounce", :system :imperial, :type :weight},
+  ;;     "pound" {:id "pound", :label "Pound", :system :imperial, :type :weight},
+  ;;     "tbsp" {:id "tbsp", :label "Tablespoon", :system :imperial, :type :volume},
+  ;;     "tsp" {:id "tsp", :label "Teaspoon", :system :imperial, :type :volume}}
+
+
+  ;; => {:cup {:id :cup, :label "Cup", :system :imperial, :type :volume},
+  ;;     :floz {:id :floz, :label "Fluid Ounce", :system :imperial, :type :volume},
+  ;;     :gallon {:id :gallon, :label "Gallon", :system :imperial, :type :volume},
+  ;;     :gram {:id :gram, :label "Gram", :system :metric, :type :weight},
+  ;;     :kilogram {:id :kilogram, :label "Kilogram", :system :metric, :type :weight},
+  ;;     :ounce {:id :ounce, :label "Ounce", :system :imperial, :type :weight},
+  ;;     :pound {:id :pound, :label "Pound", :system :imperial, :type :weight},
+  ;;     :tbsp {:id :tbsp, :label "Tablespoon", :system :imperial, :type :volume},
+  ;;     :tsp {:id :tsp, :label "Teaspoon", :system :imperial, :type :volume}}
 
 (defn uoms->grouped-by-type
   "Returns a vector of uoms grouped by type
@@ -118,7 +145,14 @@
 
 (defn merge-conversions
   [conversions]
-  (reduce (fn [acc conversion] (merge acc conversion)) uoms conversions))
+  (reduce (fn
+            [acc conversion]
+            (assoc acc (:id conversion) conversion))
+          standard-conversions
+          conversions))
+
+;; TODO: Something is off with this conversion. Expecting a different factor
+;; need to debug
 
 (defn uom->uom-factor
   "The factor when converting from one UOM to another
@@ -126,6 +160,8 @@
    (uom->uom-factor salt-conversions 20 :gram :pack)
    "
   [conversions qty from to]
+  (info "from and to " from to " " (= from to))
+
   (if (= from to)
     qty
     (let [merged (merge-conversions conversions)
@@ -133,6 +169,9 @@
           g (graph reverse-lookup-index)
           path (into [] (bf-path g from to))]
 
+      ;; (pprint reverse-lookup-index)
+      ;; (pprint conversions)
+      (info "!!!! " from to path)
       (if (not-empty path)
         (let [{:keys [factor]}
               (reduce (fn
@@ -155,18 +194,32 @@
           (js/parseFloat factor))
 
       ;; No path found
-        (str "No solution found for " qty from " to " to)))))
+        (str "No solution found for " qty " " from " to " to)))))
+
+
 
 (defn cost-for-uom
   "The cost for a given UOM
    
    (cost-for-uom cost conversion :gram)"
-  [cost conversion to-uom]
+  [node-cost conversions to-uom]
+
+  ;; (pprint to-uom)
+
 
   ;; Normalize against base UOM
-  (let [{:keys [cost additional-cost uom qty]} cost
-        normalized-cost (/ (+ cost additional-cost) qty)
-        factor (uom->uom-factor conversion 1 to-uom uom)]
+  (let [{:keys [cost additional-cost uom qty]} node-cost
+        normalized-cost (* (+ cost additional-cost) qty)
+        factor (uom->uom-factor conversions 1 to-uom uom)]
+
+    (info " :node-cost " node-cost
+          " :factor " factor
+          " :to-uom" to-uom
+          " :uom " uom
+          " :normalized-cost " normalized-cost
+          " :factor " factor
+          " :qty "
+          " (* normalized-cost factor) " (* normalized-cost factor))
 
     (* normalized-cost factor)))
 

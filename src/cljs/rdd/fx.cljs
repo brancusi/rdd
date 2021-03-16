@@ -64,6 +64,19 @@
          cost-id)}))
 
 (rf/reg-event-fx
+ :create-uom
+ [rf/trim-v]
+ (fn [{:keys [db]} [uom-id label opts]]
+   {:db (assoc-in
+         db
+         [:custom-uoms uom-id]
+         (merge
+          {:id uom-id
+           :label label
+           :type :count}
+          opts))}))
+
+(rf/reg-event-fx
  :create-relate-cost
  [rf/trim-v (generate-uuid :cost-id)]
  (fn [{:keys [db cost-id]} [node-id cost-data]]

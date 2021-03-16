@@ -8,7 +8,7 @@
    [rdd.components.add-node-row.subs]
    [rdd.components.node-editor.subs]
    [rdd.components.node-editor.fx]
-
+   [rdd.components.inputs.uom-drop-down.view :refer [uom-drop-down]]
    [rdd.components.viewers.ednviewer :refer [edn->hiccup]]
    [goog.string.format]
    [re-frame.core :as rf :refer [subscribe dispatch]]
@@ -16,8 +16,6 @@
    [rdd.utils.conversions :refer []]
    [herb.core :refer [<class]]
    [re-com.core   :refer [input-text button single-dropdown at v-box h-box label box]]))
-
-(reduce + [1 2 "3"])
 
 (defn yield-editor
   [nt]
@@ -29,7 +27,15 @@
                                                             yield-uom
                                                             qty])) children)
         total-weight (reduce + (map js/parseFloat normalized-children-weights))
-        yield-ratio (/ yield total-weight)]
+        yield-ratio (/ yield total-weight)
+
+
+        update-node (fn
+                      [key [val _]]
+                      (rf/dispatch [:update-node id {key val}]))
+
+        create-new-uom (fn [label]
+                         (rf/dispatch [:create-and-link-uom-node id label]))]
     [v-box
      :class "my-4"
      :children [[v-box :children [[h-box
@@ -46,17 +52,12 @@
                                                       :src (at)
                                                       :model (str yield)
                                                       :width "100px"
-                                                      :on-change (fn [val _]
-                                                                   (dispatch [:update-node id {:yield val}]))]]
-                                              [single-dropdown
-                                               :src (at)
-                                               :model yield-uom
-                                               :class "ml-2"
-                                               :choices [{:id :gram :label "Gram"}
-                                                         {:id :pound :label "Pound"}
-                                                         {:id :kilogram :label "Kilogram"}]
-                                               :on-change (fn [choice]
-                                                            (dispatch [:update-node id {:yield-uom choice}]))]]]
+                                                      :on-change #(update-node :yield [%])]]
+
+
+                                              [uom-drop-down {:model yield-uom
+                                                              :create-fn create-new-uom
+                                                              :update-fn (partial update-node :yield-uom)}]]]
                                   [h-box
                                    :children [[label
                                                :class "mr-2"

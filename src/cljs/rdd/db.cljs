@@ -207,7 +207,7 @@
       {:name name
        :id (string/lower-case name)
        :yield 1
-       :yield-uom :gram})
+       :yield-uom "gram"})
     names)))
 
 (comment
@@ -215,10 +215,20 @@
 ;;  
   )
 
+(def standard-uoms {"cup" {:id "cup", :label "Cup", :system :imperial, :type :volume}
+                    "floz" {:id "floz", :label "Fluid Ounce", :system :imperial, :type :volume}
+                    "gallon" {:id "gallon", :label "Gallon", :system :imperial, :type :volume}
+                    "gram" {:id "gram", :label "Gram", :system :metric, :type :weight}
+                    "kilogram" {:id "kilogram", :label "Kilogram", :system :metric, :type :weight}
+                    "ounce" {:id "ounce", :label "Ounce", :system :imperial, :type :weight}
+                    "pound" {:id "pound", :label "Pound", :system :imperial, :type :weight}
+                    "tbsp" {:id "tbsp", :label "Tablespoon", :system :imperial, :type :volume}
+                    "tsp" {:id "tsp", :label "Teaspoon", :system :imperial, :type :volume}})
+
 (def internal-nodes {"salt"         {:name "Salt"
                                      :id "salt"
                                      :yield 1
-                                     :yield-uom :gram
+                                     :yield-uom "gram"
                                      :parent-edges ["sauce-1-salt"]
                                      :costs ["salt-cost-1"]
                                      :conversions ["salt-cup"]}
@@ -226,19 +236,19 @@
                      "thai-basil" {:name "Thai Basil"
                                    :id "thai-basil"
                                    :yield 1
-                                   :yield-uom :gram}
+                                   :yield-uom "gram"}
 
                      "pepper"       {:name "Pepper"
                                      :id "pepper"
                                      :yield 1
-                                     :yield-uom :gram
+                                     :yield-uom "gram"
                                      :parent-edges ["sauce-1-pepper"]
                                      :costs ["pepper-cost-1"]}
 
                      "sauce-1"      {:name "Sauce 1"
                                      :id "sauce-1"
                                      :yield 1
-                                     :yield-uom :gram
+                                     :yield-uom "gram"
                                      :child-edges ["sauce-1-salt" "sauce-1-pepper"]
                                      :parent-edges ["burrito-sauce-1"]}
 
@@ -256,46 +266,43 @@
                                    :child-node "salt"
                                    :edge-id "sauce-1-salt"
                                    :qty 1
-                                   :uom :gram
+                                   :uom "gram"
                                    :index 1}
 
            "sauce-1-pepper"       {:parent-node "sauce-1"
                                    :child-node "pepper"
                                    :edge-id "sauce-1-pepper"
                                    :qty 1
-                                   :uom :gram
+                                   :uom "gram"
                                    :index 4}
 
            "burrito-sauce-1"  {:parent-node "burrito"
                                :child-node "sauce-1"
                                :edge-id "burrito-sauce-1"
                                :qty 1
-                               :uom :gram
+                               :uom "gram"
                                :index 1}}
 
-   :conversions
+   :standard-uoms standard-uoms
 
-   {"salt-cup" {:id "salt-cup"
-                :from :cup
-                :to :gram
-                :factor 273}}
+   :custom-uoms {"burrito" {:id "burrito" :label "Burrito" :system :imperial :type :count}}
 
-   #_{"salt" {:cup    {:gram 273}
-              :case   {:pack 25}
-              :pinch  {:gram 0.355625}
-              :pack   {:pound 1}}}
+   :conversions {"salt-cup" {:id "salt-cup"
+                             :from "cup"
+                             :to "gram"
+                             :factor 273}}
 
    :costs {"salt-cost-1"    {:id "salt-cost-1"
                              :cost 1
                              :qty 1
-                             :uom :gram
+                             :uom "gram"
                              :date 1
                              :additional-cost 0}
 
            "pepper-cost-1"  {:id "pepper-cost-1"
                              :cost 1
                              :qty 1
-                             :uom :gram
+                             :uom "gram"
                              :date 1
                              :additional-cost 0}}})
 

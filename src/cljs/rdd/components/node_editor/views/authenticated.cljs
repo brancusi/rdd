@@ -37,4 +37,6 @@
               (for [{:keys [edge-id] :as node} children]
                 ^{:key edge-id} [node-row
                                  {:tree node
-                                  :parent-node-id id}])]])
+                                  :parent-node-id id}])
+
+              [edn->hiccup tree]]])
