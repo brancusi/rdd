@@ -25,7 +25,7 @@
   [_]
   (let [local-state (r/atom {:settings-open? true
                              :open? true
-                             :panel :conversions})
+                             :panel :yield})
         mouse-over (r/atom false)
         create-edge #(rf/dispatch [:create-edge %1 %2 nil {:state {:type :new}}])
         destroy-edge #(rf/dispatch [:destroy-edge %1])

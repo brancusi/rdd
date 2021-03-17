@@ -160,7 +160,6 @@
    (uom->uom-factor salt-conversions 20 :gram :pack)
    "
   [conversions qty from to]
-  (info "from and to " from to " " (= from to))
 
   (if (= from to)
     qty
@@ -168,10 +167,6 @@
           reverse-lookup-index (generate-reverse-lookups merged)
           g (graph reverse-lookup-index)
           path (into [] (bf-path g from to))]
-
-      ;; (pprint reverse-lookup-index)
-      ;; (pprint conversions)
-      (info "!!!! " from to path)
       (if (not-empty path)
         (let [{:keys [factor]}
               (reduce (fn
@@ -197,6 +192,14 @@
         (str "No solution found for " qty " " from " to " to)))))
 
 
+(defn normalize-cost
+  "Normalize a node cost. Will coerce to float."
+  [{:keys [cost additional-cost qty]}]
+  (let [cost-float (js/parseFloat cost)
+        additional-cost-float (js/parseFloat additional-cost)
+        qty-float (js/parseFloat qty)]
+    (/ (+ cost-float additional-cost-float) qty-float)))
+
 
 (defn cost-for-uom
   "The cost for a given UOM
@@ -204,24 +207,11 @@
    (cost-for-uom cost conversion :gram)"
   [node-cost conversions to-uom]
 
-  ;; (pprint to-uom)
+  (let [{:keys [uom]} node-cost
+        normalized-cost (normalize-cost node-cost)
+        scale-factor (uom->uom-factor conversions 1 uom to-uom)]
 
-
-  ;; Normalize against base UOM
-  (let [{:keys [cost additional-cost uom qty]} node-cost
-        normalized-cost (* (+ cost additional-cost) qty)
-        factor (uom->uom-factor conversions 1 to-uom uom)]
-
-    (info " :node-cost " node-cost
-          " :factor " factor
-          " :to-uom" to-uom
-          " :uom " uom
-          " :normalized-cost " normalized-cost
-          " :factor " factor
-          " :qty "
-          " (* normalized-cost factor) " (* normalized-cost factor))
-
-    (* normalized-cost factor)))
+    (/ normalized-cost scale-factor)))
 
 (comment
 

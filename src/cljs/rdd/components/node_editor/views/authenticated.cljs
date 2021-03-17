@@ -39,4 +39,4 @@
                                  {:tree node
                                   :parent-node-id id}])
 
-              [edn->hiccup tree]]])
+              #_[edn->hiccup tree]]])

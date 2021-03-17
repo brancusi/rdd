@@ -37,15 +37,30 @@
    (:custom-uoms db)))
 
 (reg-sub
- :all-uoms
+ :merged-uoms
  (fn [_]
    [(subscribe [:custom-uoms])
     (subscribe [:standard-uoms])])
  (fn
    [[custom-uoms standard-uoms]]
-   (info "All uoms rerun")
-   (->> (uoms->grouped-by-type (merge custom-uoms standard-uoms))
+   (merge custom-uoms standard-uoms)))
+
+(reg-sub
+ :all-uoms
+ :<- [:merged-uoms]
+ (fn
+   [all-uoms]
+   (->> (uoms->grouped-by-type all-uoms)
         (mapv #(assoc % :type :select)))))
+
+(reg-sub
+ :uom
+ :<- [:merged-uoms]
+ (fn
+   [uoms [_ uom-id]]
+
+   (info uom-id uoms)
+   (get uoms uom-id)))
 
 (reg-sub
  :conversions
