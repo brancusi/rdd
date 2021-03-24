@@ -11,6 +11,10 @@
                  [reagent "1.0.0"]
                  [aysylu/loom "1.0.2"]
 
+                 [applied-science/js-interop "0.2.7"]
+                 [com.cognitect/transit-cljs "0.8.264"]
+                 [day8.re-frame/async-flow-fx "0.2.0"]
+
                  [re-frame "1.2.0"]
                  [re-com "2.13.2"]
                  [devcards "0.2.7"]

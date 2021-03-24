@@ -57,6 +57,6 @@
                  :show-today?   true
                  :show-weeks?   true
                  :placeholder   "Select a date"
-                 :format        "dd MMM, yyyy"
+                 :format        "MMM dd, yyyy"
                  :on-change     (fn [val]
                                   (update-cost :date [(to-long val)]))]]]))

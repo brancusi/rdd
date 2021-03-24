@@ -58,8 +58,6 @@
  :<- [:merged-uoms]
  (fn
    [uoms [_ uom-id]]
-
-   (info uom-id uoms)
    (get uoms uom-id)))
 
 (reg-sub
@@ -124,8 +122,6 @@
    [(subscribe [:node-conversions node-id])])
  (fn
    [[conversions] [_ node-id from-uom to-uom quantity]]
-
-   (info node-id conversions)
    (uom->uom-factor conversions quantity from-uom to-uom)))
 
 (reg-sub
@@ -143,7 +139,6 @@
    [(subscribe [:node-conversions node-id])])
  (fn
    [[conversions] [_ node-id from-uom to-uom]]
-   (info node-id conversions)
    (uom->uom-factor conversions 1 from-uom to-uom)))
 
 (reg-sub

@@ -31,7 +31,12 @@
         destroy-edge #(rf/dispatch [:destroy-edge %1])
         update-local-state #(swap! local-state merge %)
         toggle-open #(update-local-state {:open? (not (:open? @local-state))})
-        toggle-settings-panel #(update-local-state {:settings-open? (not (:settings-open? @local-state))})]
+        toggle-settings-panel #(update-local-state {:settings-open? (not (:settings-open? @local-state))})
+
+        jump-to-settings-panel (fn
+                                 [panel]
+                                 (update-local-state {:settings-open? true
+                                                      :panel panel}))]
 
 
     (fn [{:keys [tree
@@ -73,6 +78,7 @@
                                                :size "150px"
                                                :child [label
                                                        :class "cursor-pointer"
+                                                       :on-click toggle-settings-panel
                                                        :label name]]]])
 
                                 (quantity-editor tree)
@@ -81,6 +87,8 @@
                                   [box
                                    :class "ml-8"
                                    :child [label
+                                           :class "cursor-pointer"
+                                           :on-click #(jump-to-settings-panel :costs)
                                            :label (str "Cost missing")]])
 
                                 [gap :size "1"]

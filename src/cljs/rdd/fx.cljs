@@ -8,6 +8,8 @@
 
    [rdd.db :refer [default-db]]
    [rdd.interceptors.db-interceptors :refer [generate-uuid re-index-edges]]
+   [cljs-time.core    :refer [today days minus plus day-of-week before?]]
+   [cljs-time.coerce  :refer [to-local-date from-string to-long from-long]]
 
    [re-frame.core :as rf]
    [nano-id.core :refer [nano-id]]))
@@ -47,7 +49,9 @@
  :create-cost
  [rf/trim-v]
  (fn [{:keys [db]} [cost-id data]]
-   (let [cost-data (merge data {:id cost-id})]
+   (let [cost-data (merge data {:id cost-id
+                                :uom "pound"
+                                :date (to-long (today))})]
      {:db (assoc-in
            db
            [:costs cost-id]

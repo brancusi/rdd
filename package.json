@@ -8,6 +8,7 @@
  "dependencies": {
   "create-react-class": "15.6.3",
   "highlight.js": "9.18.1",
+  "localforage": "^1.9.0",
   "react": "17.0.1",
   "react-dom": "17.0.1",
   "react-highlight.js": "1.0.7"

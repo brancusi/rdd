@@ -5,6 +5,9 @@
    [cljs.pprint :refer [pprint]]
    [nano-id.core :refer [nano-id]]
    [rdd.db :refer [default-db]]
+   [cognitect.transit :as t]
+   ["localforage" :as lf]
+   [applied-science.js-interop :as j]
 
    [rdd.utils.db-utils :as db-utils]
    [clojure.data :as data]))
@@ -69,3 +72,45 @@
                               db
                               re-indexed-edges)]
               (rf/assoc-effect context :db updated-db)))))
+
+
+(def heyson (atom 0))
+
+(set-validator! heyson (fn [val]
+                         (println val)
+                         (number? val)
+                                 ;; => false
+                         ))
+
+@heyson
+
+(swap! heyson inc)
+;; (reset! heyson "b")
+
+(defn to->localstorage
+  "Save to local storage with key"
+  [ls-key]
+  (rf/->interceptor
+   :id :to->localstorage
+   :after (fn
+            [context]
+            (let [db (rf/get-effect context :db)
+                  w (t/writer :json)
+                  encoded-db (t/write w db)]
+
+              (j/call lf :setItem key encoded-db)
+              (rf/assoc-effect context :db db)))))
+
+(defn from<-localstorage
+  "Grab from local storage by key"
+  [ls-key coeffect-key]
+  (rf/->interceptor
+   :id :to->localstorage
+   :after (fn
+            [context]
+            (let [r (t/reader :json)]
+
+              (info ls-key coeffect-key (j/call lf :getItem ls-key))
+
+              (->> (t/read r (j/call lf :getItem ls-key))
+                   (rf/assoc-effect context coeffect-key))))))
