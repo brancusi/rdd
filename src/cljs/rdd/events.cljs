@@ -17,6 +17,5 @@
 
 (re-frame/reg-event-fx
  ::initialize-db
- [(from<-localstorage :db :stashed-db)]
  (fn [_ _]
    {:db db/default-db}))
